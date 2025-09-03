@@ -188,7 +188,7 @@
                     </div>
                 </div>
             </div>
-            <div>
+            <div class="text-center">
                 <h1 class="text-4xl font-bold">Панель мониторинга</h1>
             </div>
         </header>
@@ -275,7 +275,14 @@
 
             <!-- Таблица с данными (снизу) -->
             <div class="card mt-8">
-                <h2 class="text-2xl font-semibold mb-6">Журнал данных</h2>
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-semibold">Журнал данных</h2>
+                    <div class="flex items-center gap-2">
+                        <input type="date" id="search-date" class="form-input w-auto text-sm">
+                        <button id="search-btn" class="btn btn-submit w-auto px-4 py-2 text-sm rounded-md">Найти</button>
+                        <button id="reset-btn" class="btn btn-secondary w-auto px-4 py-2 text-sm rounded-md">Сбросить</button>
+                    </div>
+                </div>
                 <div id="loading-state" class="text-center text-secondary py-8">Загрузка данных...</div>
                 <div class="overflow-x-auto hidden" id="table-container">
                     <table class="min-w-full divide-y" style="border-color: var(--border-color);">
@@ -387,6 +394,7 @@
             const ADMIN_EMAIL = 'lequangduc19865@gmail.com';
             let currentUserEmail = null;
             let unsubscribeMain, unsubscribeHistory;
+            let allEntries = []; 
 
 
             // --- Firebase Configuration ---
@@ -432,10 +440,7 @@
             // --- View Toggling ---
             showRegisterBtn.addEventListener('click', (e) => { e.preventDefault(); loginView.classList.add('hidden'); registerView.classList.remove('hidden'); });
             showLoginBtn.addEventListener('click', (e) => { e.preventDefault(); registerView.classList.add('hidden'); loginView.classList.remove('hidden'); });
-            historyBtn.addEventListener('click', () => { mainView.classList.add('hidden'); historyView.classList.remove('hidden'); initializeHistoryView(); });
-            backToMainBtn.addEventListener('click', () => { historyView.classList.add('hidden'); mainView.classList.remove('hidden'); if(unsubscribeHistory) unsubscribeHistory(); });
-
-            
+           
             // --- Auth Handlers ---
             registerForm.addEventListener('submit', (e) => { e.preventDefault(); handleRegistration(); });
             loginForm.addEventListener('submit', (e) => { e.preventDefault(); handleLogin(); });
@@ -475,6 +480,10 @@
                     document.getElementById('data-table-body').addEventListener('click', handleTableActions);
                     cancelEditBtn.addEventListener('click', () => editModal.classList.add('hidden'));
                     editForm.addEventListener('submit', handleUpdateComment);
+                    historyBtn.addEventListener('click', () => { mainView.classList.add('hidden'); historyView.classList.remove('hidden'); initializeHistoryView(); });
+                    backToMainBtn.addEventListener('click', () => { historyView.classList.add('hidden'); mainView.classList.remove('hidden'); if(unsubscribeHistory) unsubscribeHistory(); });
+                    document.getElementById('search-btn').addEventListener('click', handleSearch);
+                    document.getElementById('reset-btn').addEventListener('click', resetSearch);
                 }
 
                 // Theme Toggle Logic
@@ -500,8 +509,8 @@
                 function listenForDataChanges() {
                     const q = query(dataCollectionRef, orderBy('date', 'desc'));
                     unsubscribeMain = onSnapshot(q, async (snapshot) => {
-                        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        renderTable(data);
+                        allEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        renderTable(allEntries);
                     }, handleError('Ошибка загрузки данных.'));
                 }
                 
@@ -512,6 +521,28 @@
                         renderHistory(historyData);
                     }, handleError('Ошибка загрузки истории.'));
                 }
+                 function handleSearch() {
+                    const searchDateVal = document.getElementById('search-date').value;
+                    if (!searchDateVal) {
+                        renderTable(allEntries);
+                        return;
+                    }
+                    const searchDate = new Date(searchDateVal);
+                    
+                    const filteredData = allEntries.filter(entry => {
+                        const entryDate = entry.date.toDate();
+                        return entryDate.getFullYear() === searchDate.getFullYear() &&
+                               entryDate.getMonth() === searchDate.getMonth() &&
+                               entryDate.getDate() === searchDate.getDate();
+                    });
+                    renderTable(filteredData);
+                }
+
+                function resetSearch() {
+                    document.getElementById('search-date').value = '';
+                    renderTable(allEntries);
+                }
+
 
                 async function handleAddEntry(e) {
                     e.preventDefault();
@@ -522,7 +553,7 @@
                         const docRef = await addDoc(dataCollectionRef, newEntryData);
                         
                         const logDetails = { ...newEntryData };
-                        delete logDetails.createdAt; // Remove sentinel before logging
+                        delete logDetails.createdAt; 
                         logDetails.date = logDetails.date.toISOString();
                         
                         await logHistory('create', docRef.id, { newData: logDetails });
