@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -18,6 +18,8 @@
             --table-header-bg: #1E1E1E;
             --hover-bg: #3a3a3a;
             --date-header-bg: #333333;
+            --problem-bg: rgba(153, 27, 27, 0.2);
+            --problem-hover-bg: rgba(153, 27, 27, 0.4);
         }
 
         html.light {
@@ -31,6 +33,8 @@
             --table-header-bg: #f3f4f6;
             --hover-bg: #f3f4f6;
             --date-header-bg: #e5e7eb;
+            --problem-bg: rgba(239, 68, 68, 0.1);
+            --problem-hover-bg: rgba(239, 68, 68, 0.2);
         }
 
         body {
@@ -641,11 +645,20 @@
 
                         entriesForDay.forEach(entry => {
                             const row = document.createElement('tr');
+                            const isProblem = entry.comment && entry.comment.trim() !== 'Прострелов, полос нет';
+                            
                             row.className = "hover-row";
+                             if (isProblem) {
+                                row.style.backgroundColor = 'var(--problem-bg)';
+                            }
                             row.style.transition = 'background-color 0.3s';
                             
-                            row.addEventListener('mouseover', () => { row.style.backgroundColor = 'var(--hover-bg)'; });
-                            row.addEventListener('mouseout', () => { row.style.backgroundColor = 'transparent'; });
+                            row.addEventListener('mouseover', () => {
+                                 row.style.backgroundColor = isProblem ? 'var(--problem-hover-bg)' : 'var(--hover-bg)';
+                            });
+                            row.addEventListener('mouseout', () => {
+                                row.style.backgroundColor = isProblem ? 'var(--problem-bg)' : 'transparent';
+                            });
                             
                             const formattedTime = entry.date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 
