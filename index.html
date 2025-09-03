@@ -190,7 +190,6 @@
             </div>
             <div>
                 <h1 class="text-4xl font-bold">Панель мониторинга</h1>
-                <p class="text-secondary mt-1">Климат и GIP</p>
             </div>
         </header>
 
@@ -521,7 +520,12 @@
                     
                     try {
                         const docRef = await addDoc(dataCollectionRef, newEntryData);
-                        await logHistory('create', docRef.id, { newData: newEntryData });
+                        
+                        const logDetails = { ...newEntryData };
+                        delete logDetails.createdAt; // Remove sentinel before logging
+                        logDetails.date = logDetails.date.toISOString();
+                        
+                        await logHistory('create', docRef.id, { newData: logDetails });
                         e.target.reset();
                         document.getElementById('custom-comment-wrapper').classList.add('hidden');
                     } catch (error) {
@@ -583,9 +587,10 @@
                      try {
                         const docSnap = await getDoc(docRef);
                         const deletedData = docSnap.data();
+                        const logDetails = { ...deletedData, date: deletedData.date.toDate().toISOString() };
                         
                         await deleteDoc(docRef);
-                        await logHistory('delete', docId, { deletedData });
+                        await logHistory('delete', docId, { deletedData: logDetails });
                      } catch(error) {
                         handleError('Не удалось удалить запись.')(error);
                      }
@@ -700,9 +705,15 @@
                         const row = document.createElement('tr');
                         const date = log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString('ru-RU') : 'N/A';
                         let detailsHtml = '';
-                        if (log.action === 'create') detailsHtml = 'Запись создана.';
-                        if (log.action === 'delete') detailsHtml = 'Запись удалена.';
-                        if (log.action === 'update') detailsHtml = `Комментарий изменен с "${log.details.oldComment}" на "${log.details.newComment}"`;
+                        if (log.action === 'create') {
+                            const createdDate = new Date(log.details.newData.date).toLocaleString('ru-RU');
+                            detailsHtml = `Создана запись от ${createdDate}. Комментарий: "${log.details.newData.comment}"`;
+                        } else if (log.action === 'delete') {
+                            const deletedDate = new Date(log.details.deletedData.date).toLocaleString('ru-RU');
+                            detailsHtml = `Удалена запись от ${deletedDate}. Комментарий был: "${log.details.deletedData.comment}"`;
+                        } else if (log.action === 'update') {
+                            detailsHtml = `Комментарий изменен с "${log.details.oldComment}" на "${log.details.newComment}"`;
+                        }
 
                         row.innerHTML = `
                             <td class="px-6 py-4 whitespace-nowrap text-sm">${date}</td>
