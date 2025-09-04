@@ -207,14 +207,14 @@
                 </div>
             </div>
             <div class="flex justify-center items-center gap-4 p-2 rounded-lg" style="background-color: var(--card-bg-color);">
-                <button id="tab-klimat" class="nav-tab active">📊 Климат</button>
-                <button id="tab-vozduh" class="nav-tab">🌬️ Качество воздуха</button>
+                <button id="tab-klimat" data-view="klimat-view" class="nav-tab active">📊 Климат</button>
+                <button id="tab-vozduh" data-view="vozduh-view" class="nav-tab">🌬️ Качество воздуха</button>
             </div>
         </header>
 
         <!-- VIEWS CONTAINER -->
         <main>
-            <!-- Klimat GIP View -->
+            <!-- Klimat View -->
             <div id="klimat-view">
                 <div class="card">
                     <h2 class="text-2xl font-semibold mb-6">Добавить новую запись</h2>
@@ -356,12 +356,12 @@
                 </div>
             </div>
 
-            <!-- GIP History View -->
+            <!-- Generic History View -->
             <div id="history-view" class="hidden">
                  <div class="card">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-semibold">История изменений Климат</h2>
-                        <button id="back-to-main-btn" class="btn btn-secondary px-4 py-2 text-sm w-auto">Назад</button>
+                        <h2 id="history-title" class="text-2xl font-semibold">История изменений</h2>
+                        <button id="back-btn" class="btn btn-secondary px-4 py-2 text-sm w-auto">Назад</button>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y" style="border-color: var(--border-color);">
@@ -403,7 +403,7 @@
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, getDocs, doc, updateDoc, deleteDoc, orderBy, Timestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, getDocs, doc, getDoc, updateDoc, deleteDoc, orderBy, Timestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         document.addEventListener('DOMContentLoaded', () => {
             
@@ -426,10 +426,11 @@
             // --- App State ---
             const ADMIN_EMAIL = 'lequangduc19865@gmail.com';
             let currentUserEmail = null;
-            let unsubscribeKlimat, unsubscribeKlimatHistory, unsubscribeVozduh;
+            let unsubscribeKlimat, unsubscribeKlimatHistory, unsubscribeVozduh, unsubscribeVozduhHistory;
             let allKlimatEntries = [];
             let allVozduhRecords = [];
             let currentEditContext = { id: null, type: null };
+            let lastActiveTabId = 'tab-klimat';
 
             // --- UI Elements ---
             const authContainer = document.getElementById('auth-container');
@@ -449,6 +450,8 @@
             const klimatView = document.getElementById('klimat-view');
             const vozduhView = document.getElementById('vozduh-view');
             const historyView = document.getElementById('history-view');
+            const historyTitle = document.getElementById('history-title');
+            const historyTableBody = document.getElementById('history-table-body');
             const tabKlimat = document.getElementById('tab-klimat');
             const tabVozduh = document.getElementById('tab-vozduh');
             // Modals & General
@@ -462,7 +465,7 @@
             const addKlimatForm = document.getElementById('add-klimat-form');
             const klimatTableBody = document.getElementById('klimat-table-body');
             const historyBtn = document.getElementById('history-btn');
-            const backToMainBtn = document.getElementById('back-to-main-btn');
+            const backBtn = document.getElementById('back-btn');
             // Vozduh specific
             const addVozduhForm = document.getElementById('add-vozduh-form');
             const vozduhTableBody = document.getElementById('vozduh-table-body');
@@ -489,6 +492,7 @@
                     if (unsubscribeKlimat) unsubscribeKlimat();
                     if (unsubscribeKlimatHistory) unsubscribeKlimatHistory();
                     if (unsubscribeVozduh) unsubscribeVozduh();
+                    if (unsubscribeVozduhHistory) unsubscribeVozduhHistory();
                 }
             });
 
@@ -545,17 +549,19 @@
 
             // --- Tab Navigation ---
             function handleTabClick(event) {
-                const activeTab = event.currentTarget.id;
+                lastActiveTabId = event.currentTarget.id;
 
-                // Toggle active class on tabs
-                tabKlimat.classList.toggle('active', activeTab === 'tab-klimat');
-                tabVozduh.classList.toggle('active', activeTab === 'tab-vozduh');
+                document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+                document.querySelectorAll('#klimat-view, #vozduh-view').forEach(view => view.classList.add('hidden'));
 
-                // Show/hide views
-                klimatView.classList.toggle('hidden', activeTab !== 'tab-klimat');
-                vozduhView.classList.toggle('hidden', activeTab !== 'tab-vozduh');
+                event.currentTarget.classList.add('active');
+                document.getElementById(event.currentTarget.dataset.view).classList.remove('hidden');
                 
-                // Hide history view if it was open
+                // Update history button text
+                if(currentUserEmail === ADMIN_EMAIL){
+                    historyBtn.textContent = lastActiveTabId === 'tab-klimat' ? 'Общая история Климат' : 'Общая история Качество воздуха';
+                }
+
                 historyView.classList.add('hidden');
             }
             tabKlimat.addEventListener('click', handleTabClick);
@@ -639,7 +645,7 @@
                                     <button data-id="${entry.id}" data-type="klimat" class="edit-btn p-1 hover:text-yellow-400">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                     </button>
-                                    <button data-id="${entry.id}" class="delete-klimat-btn p-1 hover:text-red-500">
+                                    <button data-id="${entry.id}" data-type="klimat" class="delete-btn p-1 hover:text-red-500">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                     </button>
                                 </div>
@@ -688,24 +694,11 @@
                 }
             }
             
-            async function handleDeleteKlimatEntry(docId) {
-                const docRef = doc(klimatDataRef, docId);
-                try {
-                    const docSnap = await getDoc(docRef);
-                    const deletedData = docSnap.data();
-                    const logDetails = { ...deletedData, date: deletedData.date.toDate().toISOString() };
-                    
-                    await deleteDoc(docRef);
-                    await logKlimatHistory('delete', docId, { deletedData: logDetails });
-                } catch(error) {
-                    console.error("Failed to delete Klimat entry:", error);
-                }
-            }
-            
             // #############################################
             // #        VOZDUH (AIR QUALITY) SECTION       #
             // #############################################
             const vozduhDataRef = collection(db, `artifacts/${appId}/public/data/air_quality_records`);
+            const vozduhHistoryRef = collection(db, `artifacts/${appId}/public/data/air_quality_history`);
 
             const vozduhParams = {
                 hcho: { thresholds: { good: 0.01, moderate: 0.05 } },
@@ -776,7 +769,7 @@
                                 <button title="Изменить комментарий" class="edit-btn p-1 hover:text-yellow-400" data-type="vozduh" data-id="${record.id}">
                                     <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"></path></svg>
                                 </button>
-                                <button title="Удалить запись" class="delete-vozduh-btn p-1 hover:text-red-500" data-id="${record.id}">
+                                <button title="Удалить запись" class="delete-btn p-1 hover:text-red-500" data-type="vozduh" data-id="${record.id}">
                                     <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
                             </div>
@@ -802,7 +795,9 @@
                 };
 
                 try {
-                    await addDoc(vozduhDataRef, newRecord);
+                    const docRef = await addDoc(vozduhDataRef, newRecord);
+                    const logDetails = { ...newRecord, datetime: newRecord.datetime.toDate().toISOString() };
+                    await logVozduhHistory('create', docRef.id, { newData: logDetails });
                     event.target.reset();
                     setDefaultDateTimes();
                 } catch (e) {
@@ -810,12 +805,6 @@
                 }
             }
             
-            async function handleDeleteVozduhEntry(docId) {
-                if (confirm('Вы уверены, что хотите удалить эту запись?')) {
-                    await deleteDoc(doc(vozduhDataRef, docId));
-                }
-            }
-
             // #############################################
             // #        PDF DATA SEEDING SECTION           #
             // #############################################
@@ -896,55 +885,87 @@
             // #############################################
             
             function setupEventListeners() {
-                // Klimat Listeners
+                // Main View Listeners
                 addKlimatForm.addEventListener('submit', handleAddKlimatEntry);
-                klimatTableBody.addEventListener('click', (e) => {
-                     const button = e.target.closest('button');
-                     if (!button) return;
-                     const docId = button.dataset.id;
-                     if (button.classList.contains('delete-klimat-btn')) {
-                         if (confirm('Вы уверены, что хотите удалить эту запись GIP?')) {
-                             handleDeleteKlimatEntry(docId);
-                         }
-                     }
-                });
+                addVozduhForm.addEventListener('submit', handleAddVozduhRecord);
+                
+                klimatTableBody.addEventListener('click', handleTableActions);
+                vozduhTableBody.addEventListener('click', handleTableActions);
+
                 document.getElementById('klimat-comment').addEventListener('change', (e) => {
                     document.getElementById('klimat-custom-comment-wrapper').classList.toggle('hidden', e.target.value !== 'other');
                 });
+                
+                // Search Listeners
                 document.getElementById('search-btn').addEventListener('click', handleKlimatSearch);
                 document.getElementById('reset-btn').addEventListener('click', resetKlimatSearch);
-                historyBtn.addEventListener('click', () => { klimatView.classList.add('hidden'); vozduhView.classList.add('hidden'); historyView.classList.remove('hidden'); initializeHistoryView(); });
-                backToMainBtn.addEventListener('click', () => { historyView.classList.add('hidden'); handleTabClick({currentTarget: {id: 'tab-klimat'}}); if(unsubscribeKlimatHistory) unsubscribeKlimatHistory(); });
-
-                // Vozduh Listeners
-                addVozduhForm.addEventListener('submit', handleAddVozduhRecord);
-                vozduhTableBody.addEventListener('click', (e) => {
-                     const button = e.target.closest('button');
-                     if (!button) return;
-                     const docId = button.dataset.id;
-                     if (button.classList.contains('delete-vozduh-btn')) {
-                         handleDeleteVozduhEntry(docId);
-                     }
-                });
                 document.getElementById('vozduh-search-btn').addEventListener('click', handleVozduhSearch);
                 document.getElementById('vozduh-reset-btn').addEventListener('click', resetVozduhSearch);
 
-                // Shared Listeners (Edit Modal)
-                klimatTableBody.addEventListener('click', handleEditClick);
-                vozduhTableBody.addEventListener('click', handleEditClick);
+                // History Listeners
+                historyBtn.addEventListener('click', showHistoryView);
+                backBtn.addEventListener('click', () => { 
+                    historyView.classList.add('hidden');
+                    document.getElementById(lastActiveTabId === 'tab-klimat' ? 'klimat-view' : 'vozduh-view').classList.remove('hidden');
+                    if(unsubscribeKlimatHistory) unsubscribeKlimatHistory();
+                    if(unsubscribeVozduhHistory) unsubscribeVozduhHistory();
+                });
+
+                // Edit Modal Listeners
                 cancelEditBtn.addEventListener('click', () => editModal.classList.add('hidden'));
                 editForm.addEventListener('submit', handleUpdateComment);
             }
 
-            // --- Edit Modal Logic (Shared) ---
-            async function handleEditClick(e) {
-                const button = e.target.closest('.edit-btn');
+            function handleTableActions(e) {
+                const button = e.target.closest('button');
                 if (!button) return;
                 
                 const docId = button.dataset.id;
-                const type = button.dataset.type; // 'klimat' or 'vozduh'
-                currentEditContext = { id: docId, type: type };
+                const type = button.dataset.type;
 
+                if (button.classList.contains('edit-btn')) {
+                    handleEditClick(docId, type);
+                } else if (button.classList.contains('delete-btn')) {
+                    if (confirm(`Вы уверены, что хотите удалить эту запись?`)) {
+                        if (type === 'klimat') handleDeleteKlimatEntry(docId);
+                        else if (type === 'vozduh') handleDeleteVozduhEntry(docId);
+                    }
+                }
+            }
+
+            async function handleDeleteKlimatEntry(docId) {
+                const docRef = doc(klimatDataRef, docId);
+                try {
+                    const docSnap = await getDoc(docRef);
+                    if(!docSnap.exists()) return;
+                    const deletedData = docSnap.data();
+                    const logDetails = { ...deletedData, date: deletedData.date.toDate().toISOString() };
+                    
+                    await deleteDoc(docRef);
+                    await logKlimatHistory('delete', docId, { deletedData: logDetails });
+                } catch(error) {
+                    console.error("Failed to delete Klimat entry:", error);
+                }
+            }
+
+            async function handleDeleteVozduhEntry(docId) {
+                const docRef = doc(vozduhDataRef, docId);
+                try {
+                     const docSnap = await getDoc(docRef);
+                    if(!docSnap.exists()) return;
+                    const deletedData = docSnap.data();
+                    const logDetails = { ...deletedData, datetime: deletedData.datetime.toDate().toISOString() };
+
+                    await deleteDoc(docRef);
+                    await logVozduhHistory('delete', docId, { deletedData: logDetails });
+                } catch(error) {
+                    console.error("Failed to delete Vozduh entry:", error);
+                }
+            }
+
+            // --- Edit Modal Logic (Shared) ---
+            function handleEditClick(docId, type) {
+                currentEditContext = { id: docId, type: type };
                 const record = type === 'klimat' 
                     ? allKlimatEntries.find(r => r.id === docId)
                     : allVozduhRecords.find(r => r.id === docId);
@@ -965,12 +986,18 @@
                 const docRef = doc(dataRef, id);
 
                 try {
-                    if (type === 'klimat') {
-                        const docSnap = await getDoc(docRef);
-                        const oldComment = docSnap.data().comment;
-                        await logKlimatHistory('update', id, { oldComment, newComment });
-                    }
+                    const docSnap = await getDoc(docRef);
+                    if(!docSnap.exists()) return;
+                    const oldComment = docSnap.data().comment;
+                    
                     await updateDoc(docRef, { comment: newComment });
+                    
+                    if (type === 'klimat') {
+                        await logKlimatHistory('update', id, { oldComment, newComment });
+                    } else if (type === 'vozduh') {
+                        await logVozduhHistory('update', id, { oldComment, newComment });
+                    }
+                    
                     editModal.classList.add('hidden');
                 } catch(error) {
                     console.error('Failed to update comment:', error);
@@ -978,7 +1005,7 @@
             }
 
 
-            // --- Klimat History & Search ---
+            // --- History & Search ---
             function handleKlimatSearch() {
                 const searchDateVal = document.getElementById('search-date').value;
                 if (!searchDateVal) { renderKlimatTable(allKlimatEntries); return; }
@@ -997,7 +1024,21 @@
                 renderKlimatTable(allKlimatEntries);
             }
 
-            function initializeHistoryView() {
+            function showHistoryView() {
+                klimatView.classList.add('hidden');
+                vozduhView.classList.add('hidden');
+                historyView.classList.remove('hidden');
+
+                if (lastActiveTabId === 'tab-klimat') {
+                    initializeKlimatHistoryView();
+                } else {
+                    initializeVozduhHistoryView();
+                }
+            }
+            
+            // Klimat History
+            function initializeKlimatHistoryView() {
+                historyTitle.textContent = "История изменений Климат";
                 const q = query(klimatHistoryRef, orderBy('timestamp', 'desc'));
                 unsubscribeKlimatHistory = onSnapshot(q, (snapshot) => {
                     renderKlimatHistory(snapshot.docs.map(doc => doc.data()));
@@ -1005,18 +1046,13 @@
             }
              async function logKlimatHistory(action, docId, details) {
                 try {
-                    await addDoc(klimatHistoryRef, {
-                        action, docId, details,
-                        userEmail: currentUserEmail,
-                        timestamp: serverTimestamp(),
-                    });
-                } catch(error) { console.error("Failed to log history:", error); }
+                    await addDoc(klimatHistoryRef, { action, docId, details, userEmail: currentUserEmail, timestamp: serverTimestamp() });
+                } catch(error) { console.error("Failed to log Klimat history:", error); }
             }
             function renderKlimatHistory(historyData) {
-                const historyBody = document.getElementById('history-table-body');
-                historyBody.innerHTML = '';
+                historyTableBody.innerHTML = '';
                 if (historyData.length === 0) {
-                    historyBody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-secondary">История изменений пуста.</td></tr>';
+                    historyTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-secondary">История изменений пуста.</td></tr>';
                     return;
                 }
                 historyData.forEach(log => {
@@ -1032,9 +1068,54 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary">${log.userEmail}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary">${log.action}</td>
                         <td class="px-6 py-4 text-sm text-secondary">${detailsHtml}</td>`;
-                    historyBody.appendChild(row);
+                    historyTableBody.appendChild(row);
                 });
             }
+
+            // Vozduh History
+            function initializeVozduhHistoryView() {
+                historyTitle.textContent = "История изменений Качество воздуха";
+                const q = query(vozduhHistoryRef, orderBy('timestamp', 'desc'));
+                unsubscribeVozduhHistory = onSnapshot(q, (snapshot) => {
+                    renderVozduhHistory(snapshot.docs.map(doc => doc.data()));
+                });
+            }
+             async function logVozduhHistory(action, docId, details) {
+                try {
+                    await addDoc(vozduhHistoryRef, { action, docId, details, userEmail: currentUserEmail, timestamp: serverTimestamp() });
+                } catch(error) { console.error("Failed to log Vozduh history:", error); }
+            }
+            function renderVozduhHistory(historyData) {
+                historyTableBody.innerHTML = '';
+                if (historyData.length === 0) {
+                    historyTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-secondary">История изменений пуста.</td></tr>';
+                    return;
+                }
+                historyData.forEach(log => {
+                    const row = document.createElement('tr');
+                    const date = log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString('ru-RU') : 'N/A';
+                    let detailsHtml = '';
+
+                    const formatRecord = (record) => {
+                        return Object.entries(record)
+                            .filter(([key, value]) => value !== null && key !== 'datetime')
+                            .map(([key, value]) => `${key}: ${value}`)
+                            .join(', ');
+                    };
+
+                    if (log.action === 'create') detailsHtml = `Создана запись: ${formatRecord(log.details.newData)}`;
+                    else if (log.action === 'delete') detailsHtml = `Удалена запись: ${formatRecord(log.details.deletedData)}`;
+                    else if (log.action === 'update') detailsHtml = `Комментарий изменен с "${log.details.oldComment || ''}" на "${log.details.newComment}"`;
+
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">${date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary">${log.userEmail}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary">${log.action}</td>
+                        <td class="px-6 py-4 text-sm text-secondary">${detailsHtml}</td>`;
+                    historyTableBody.appendChild(row);
+                });
+            }
+
 
             // --- Helpers ---
             function setDefaultDateTimes() {
@@ -1070,7 +1151,4 @@
     </script>
 </body>
 </html>
-
-
-
 
