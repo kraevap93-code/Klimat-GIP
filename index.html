@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Статистика Влияния Климата на GIP</title>
+    <title>Панель Мониторинга</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -20,6 +20,10 @@
             --date-header-bg: #52525b;
             --problem-bg: rgba(239, 68, 68, 0.1);
             --problem-hover-bg: rgba(239, 68, 68, 0.2);
+            --active-tab-bg: #FFC700;
+            --active-tab-text: #1E1E1E;
+            --inactive-tab-bg: #3f3f46;
+            --inactive-tab-text: #f4f4f5;
         }
 
         html.light {
@@ -35,6 +39,10 @@
             --date-header-bg: #e5e7eb;
             --problem-bg: rgba(239, 68, 68, 0.1);
             --problem-hover-bg: rgba(239, 68, 68, 0.2);
+            --active-tab-bg: #FFC700;
+            --active-tab-text: #1E1E1E;
+            --inactive-tab-bg: #e5e7eb;
+            --inactive-tab-text: #111827;
         }
 
         body {
@@ -65,17 +73,17 @@
             box-shadow: 0 0 0 2px rgba(255, 199, 0, 0.5);
         }
         .btn {
-             width: 100%;
-             display: inline-flex;
-             align-items: center;
-             justify-content: center;
-             padding: 0.75rem 1rem;
-             border: 1px solid transparent;
-             box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-             font-size: 1rem;
-             font-weight: 600;
-             border-radius: 0.375rem;
-             transition: background-color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1rem;
+            border: 1px solid transparent;
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 0.375rem;
+            transition: background-color 0.2s;
+            cursor: pointer;
         }
         .btn-submit {
             color: #1E1E1E;
@@ -85,37 +93,52 @@
             background-color: #e6b300;
         }
         .btn-secondary {
-             background-color: transparent;
-             border: 1px solid var(--border-color);
-             color: var(--text-primary);
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
         }
-         .btn-secondary:hover {
-             background-color: var(--hover-bg);
-         }
+        .btn-secondary:hover {
+            background-color: var(--hover-bg);
+        }
         .table-header {
             background-color: var(--table-header-bg);
         }
         .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background-color: rgba(0, 0, 0, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 50;
+            display: flex; align-items: center; justify-content: center; z-index: 50;
         }
-         /* Custom slider styles */
-        .slider-checkbox:checked ~ .slider-bg {
-            background-color: #FFC700;
+        .slider-checkbox:checked ~ .slider-bg { background-color: #FFC700; }
+        html.light .slider-checkbox:checked ~ .slider-bg { background-color: #FFC700; }
+        .slider-checkbox:checked ~ .slider-dot { transform: translateX(100%); }
+        
+        /* Air Quality Status Dots */
+        .status-dot {
+            display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+            margin-right: 8px; vertical-align: middle;
         }
-         html.light .slider-checkbox:checked ~ .slider-bg {
-             background-color: #FFC700;
-         }
-        .slider-checkbox:checked ~ .slider-dot {
-            transform: translateX(100%);
+        .status-good { background-color: #3CFF00; }
+        .status-moderate { background-color: #FFE500; }
+        .status-bad { background-color: #FF0000; }
+
+        /* Navigation Tabs */
+        .nav-tab {
+            padding: 0.5rem 1.5rem;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: var(--inactive-tab-bg);
+            color: var(--inactive-tab-text);
+            border: 2px solid transparent;
+        }
+        .nav-tab.active {
+            background-color: var(--active-tab-bg);
+            color: var(--active-tab-text);
+        }
+        .nav-tab:not(.active):hover {
+            background-color: var(--hover-bg);
+            border-color: var(--border-color);
         }
     </style>
 </head>
@@ -123,10 +146,9 @@
 
     <!-- Auth Container -->
     <div id="auth-container" class="max-w-md mx-auto">
-         <div class="card">
-             <!-- Login Form -->
+        <div class="card">
             <div id="login-view">
-                <h2 class="text-2xl font-bold text-center mb-6">Вход</h2>
+                <h2 class="text-2xl font-bold text-center mb-6">Вход в Панель Мониторинга</h2>
                 <form id="login-form" class="space-y-4">
                     <div>
                         <label for="login-email" class="block text-sm font-medium text-secondary">Email</label>
@@ -137,15 +159,14 @@
                         <input type="password" id="login-password" class="mt-1 form-input" required>
                     </div>
                     <p id="login-error" class="text-red-500 text-sm hidden"></p>
-                    <button type="submit" class="btn btn-submit">Войти</button>
+                    <button type="submit" class="btn btn-submit w-full">Войти</button>
                 </form>
                 <p class="mt-4 text-center text-sm text-secondary">
                     Нет аккаунта? <a href="#" id="show-register" class="font-medium text-[#FFC700] hover:underline">Зарегистрироваться</a>
                 </p>
             </div>
-             <!-- Register Form -->
-             <div id="register-view" class="hidden">
-                 <h2 class="text-2xl font-bold text-center mb-6">Регистрация</h2>
+            <div id="register-view" class="hidden">
+                <h2 class="text-2xl font-bold text-center mb-6">Регистрация</h2>
                 <form id="register-form" class="space-y-4">
                     <div>
                         <label for="register-email" class="block text-sm font-medium text-secondary">Email</label>
@@ -155,188 +176,203 @@
                         <label for="register-password" class="block text-sm font-medium text-secondary">Пароль</label>
                         <input type="password" id="register-password" class="mt-1 form-input" required>
                     </div>
-                     <p id="register-error" class="text-red-500 text-sm hidden"></p>
-                    <button type="submit" class="btn btn-submit">Создать аккаунт</button>
+                    <p id="register-error" class="text-red-500 text-sm hidden"></p>
+                    <button type="submit" class="btn btn-submit w-full">Создать аккаунт</button>
                 </form>
-                 <p class="mt-4 text-center text-sm text-secondary">
+                <p class="mt-4 text-center text-sm text-secondary">
                     Уже есть аккаунт? <a href="#" id="show-login" class="font-medium text-[#FFC700] hover:underline">Войти</a>
                 </p>
-             </div>
-         </div>
+            </div>
+        </div>
     </div>
-
 
     <!-- App Container -->
     <div id="app-container" class="max-w-screen-2xl mx-auto hidden">
         <header class="mb-8">
-            <div class="mb-8">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="text-sm text-secondary">Вы вошли как:</p>
-                        <p id="user-email" class="text-lg font-bold"></p>
-                        <button id="logout-btn" class="text-sm text-red-500 hover:underline">Выйти</button>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <button id="history-btn" class="hidden btn btn-submit w-auto px-4 py-2 text-sm rounded-md">Общая история</button>
-                        <label for="theme-toggle" class="flex items-center cursor-pointer">
-                            <div class="relative">
-                                <input type="checkbox" id="theme-toggle" class="sr-only slider-checkbox">
-                                <div class="block w-14 h-8 rounded-full slider-bg" style="background-color: var(--border-color);"></div>
-                                <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform slider-dot" style="background-color: var(--card-bg-color);"></div>
-                            </div>
-                        </label>
-                    </div>
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <div>
+                    <p class="text-sm text-secondary">Вы вошли как:</p>
+                    <p id="user-email" class="text-lg font-bold"></p>
+                    <button id="logout-btn" class="text-sm text-red-500 hover:underline">Выйти</button>
+                </div>
+                 <div class="flex items-center gap-4">
+                    <button id="history-btn" class="hidden btn btn-secondary w-auto px-4 py-2 text-sm rounded-md">Общая история GIP</button>
+                    <label class="flex items-center cursor-pointer">
+                        <div class="relative">
+                            <input type="checkbox" id="theme-toggle" class="sr-only slider-checkbox">
+                            <div class="block w-14 h-8 rounded-full slider-bg" style="background-color: var(--border-color);"></div>
+                            <div class="dot absolute left-1 top-1 w-6 h-6 rounded-full transition-transform slider-dot" style="background-color: var(--card-bg-color);"></div>
+                        </div>
+                    </label>
                 </div>
             </div>
-            <div class="text-center">
-                <h1 class="text-4xl font-bold">Панель мониторинга</h1>
+            <div class="flex justify-center items-center gap-4 p-2 rounded-lg" style="background-color: var(--card-bg-color);">
+                <button id="tab-klimat" class="nav-tab active">📊 Мониторинг GIP</button>
+                <button id="tab-vozduh" class="nav-tab">🌬️ Качество воздуха</button>
             </div>
         </header>
 
-        <main id="main-view">
-            <!-- Секция добавления данных (сверху) -->
-            <div class="card">
-                <h2 class="text-2xl font-semibold mb-6">Добавить новую запись</h2>
-                <form id="add-entry-form" class="space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label for="entry-date" class="block text-sm font-medium text-secondary">Дата</label>
-                            <input type="date" id="entry-date" class="mt-1 form-input" required>
+        <!-- VIEWS CONTAINER -->
+        <main>
+            <!-- Klimat GIP View -->
+            <div id="klimat-view">
+                <div class="card">
+                    <h2 class="text-2xl font-semibold mb-6">Добавить новую запись GIP</h2>
+                    <form id="add-klimat-form" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="klimat-date" class="block text-sm font-medium text-secondary">Дата</label>
+                                <input type="date" id="klimat-date" class="mt-1 form-input" required>
+                            </div>
+                            <div>
+                                <label for="klimat-time" class="block text-sm font-medium text-secondary">Время</label>
+                                <input type="time" id="klimat-time" class="mt-1 form-input" required>
+                            </div>
                         </div>
                         <div>
-                            <label for="entry-time" class="block text-sm font-medium text-secondary">Время</label>
-                            <input type="time" id="entry-time" class="mt-1 form-input" required>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <h3 class="text-md font-semibold text-primary mb-2">Климат в помещении</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div>
-                                <label for="temp" class="block text-sm font-medium text-secondary">Темп. (°С)</label>
-                                <input type="number" step="0.1" id="temp" class="mt-1 form-input" required>
-                            </div>
-                            <div>
-                                <label for="humidity" class="block text-sm font-medium text-secondary">Влажн. (%)</label>
-                                <input type="number" step="1" id="humidity" class="mt-1 form-input" required>
-                            </div>
-                            <div>
-                                <label for="pressure" class="block text-sm font-medium text-secondary">Давл. (мм)</label>
-                                <input type="number" step="1" id="pressure" class="mt-1 form-input" required>
+                            <h3 class="text-md font-semibold text-primary mb-2">Климат в помещении</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div><label for="temp" class="block text-sm font-medium text-secondary">Темп. (°С)</label><input type="number" step="0.1" id="temp" class="mt-1 form-input" required></div>
+                                <div><label for="humidity" class="block text-sm font-medium text-secondary">Влажн. (%)</label><input type="number" step="1" id="humidity" class="mt-1 form-input" required></div>
+                                <div><label for="pressure" class="block text-sm font-medium text-secondary">Давл. (мм)</label><input type="number" step="1" id="pressure" class="mt-1 form-input" required></div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div>
-                        <h3 class="text-md font-semibold text-primary mb-2">Отрицательное давление GIP</h3>
-                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                            <div>
-                                <label for="cyan" class="block text-sm font-medium text-secondary">Cyan</label>
-                                <input type="number" step="0.01" id="cyan" class="mt-1 form-input" required>
-                            </div>
-                            <div>
-                                <label for="magenta" class="block text-sm font-medium text-secondary">Magenta</label>
-                                <input type="number" step="0.01" id="magenta" class="mt-1 form-input" required>
-                            </div>
-                            <div>
-                                <label for="yellow" class="block text-sm font-medium text-secondary">Yellow</label>
-                                <input type="number" step="0.01" id="yellow" class="mt-1 form-input" required>
-                            </div>
-                            <div>
-                                <label for="black" class="block text-sm font-medium text-secondary">Black</label>
-                                <input type="number" step="0.01" id="black" class="mt-1 form-input" required>
-                            </div>
-                             <div>
-                                <label for="white" class="block text-sm font-medium text-secondary">White</label>
-                                <input type="number" step="0.01" id="white" class="mt-1 form-input" required>
+                        <div>
+                            <h3 class="text-md font-semibold text-primary mb-2">Отрицательное давление GIP</h3>
+                            <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                                <div><label for="cyan" class="block text-sm font-medium text-secondary">Cyan</label><input type="number" step="0.01" id="cyan" class="mt-1 form-input" required></div>
+                                <div><label for="magenta" class="block text-sm font-medium text-secondary">Magenta</label><input type="number" step="0.01" id="magenta" class="mt-1 form-input" required></div>
+                                <div><label for="yellow" class="block text-sm font-medium text-secondary">Yellow</label><input type="number" step="0.01" id="yellow" class="mt-1 form-input" required></div>
+                                <div><label for="black" class="block text-sm font-medium text-secondary">Black</label><input type="number" step="0.01" id="black" class="mt-1 form-input" required></div>
+                                <div><label for="white" class="block text-sm font-medium text-secondary">White</label><input type="number" step="0.01" id="white" class="mt-1 form-input" required></div>
                             </div>
                         </div>
-                    </div>
-
-                    <div>
-                        <label for="comment" class="block text-sm font-medium text-secondary">Комментарий</label>
-                        <select id="comment" class="mt-1 form-select">
-                            <option value="Прострелов, полос нет">Прострелов, полос нет</option>
-                            <option value="Были прострелы по белому">Были прострелы по белому</option>
-                            <option value="other">Другое (ввести вручную)</option>
-                        </select>
-                        <div id="custom-comment-wrapper" class="hidden mt-2">
-                             <input type="text" id="custom-comment" class="mt-1 form-input" placeholder="Введите свой комментарий...">
+                        <div>
+                            <label for="klimat-comment" class="block text-sm font-medium text-secondary">Комментарий</label>
+                            <select id="klimat-comment" class="mt-1 form-select">
+                                <option value="Прострелов, полос нет">Прострелов, полос нет</option>
+                                <option value="Были прострелы по белому">Были прострелы по белому</option>
+                                <option value="other">Другое (ввести вручную)</option>
+                            </select>
+                            <div id="klimat-custom-comment-wrapper" class="hidden mt-2">
+                                <input type="text" id="klimat-custom-comment" class="mt-1 form-input" placeholder="Введите свой комментарий...">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-submit w-full mt-4">Добавить</button>
+                    </form>
+                </div>
+                <div class="card mt-8">
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                        <h2 class="text-2xl font-semibold">Журнал данных GIP</h2>
+                        <div class="flex items-center gap-2">
+                            <input type="date" id="search-date" class="form-input w-auto text-sm">
+                            <button id="search-btn" class="btn btn-submit w-auto px-4 py-2 text-sm rounded-md">Найти</button>
+                            <button id="reset-btn" class="btn btn-secondary w-auto px-4 py-2 text-sm rounded-md">Сбросить</button>
                         </div>
                     </div>
-
-                    <div>
-                        <button type="submit" class="btn btn-submit mt-4">
-                            Добавить
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Таблица с данными (снизу) -->
-            <div class="card mt-8">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-semibold">Журнал данных</h2>
-                    <div class="flex items-center gap-2">
-                        <input type="date" id="search-date" class="form-input w-auto text-sm">
-                        <button id="search-btn" class="btn btn-submit w-auto px-4 py-2 text-sm rounded-md">Найти</button>
-                        <button id="reset-btn" class="btn btn-secondary w-auto px-4 py-2 text-sm rounded-md">Сбросить</button>
+                    <div id="klimat-loading" class="text-center text-secondary py-8">Загрузка данных...</div>
+                    <div class="overflow-x-auto hidden" id="klimat-table-container">
+                        <table class="min-w-full divide-y" style="border-color: var(--border-color);">
+                            <thead class="table-header">
+                                <tr>
+                                    <th rowspan="2" class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider">Время</th>
+                                    <th colspan="3" class="px-6 py-3 text-center text-xs font-medium text-secondary uppercase tracking-wider border-b border-l" style="border-color: var(--border-color);">Климат</th>
+                                    <th colspan="5" class="px-6 py-3 text-center text-xs font-medium text-secondary uppercase tracking-wider border-b border-l" style="border-color: var(--border-color);">Давление GIP</th>
+                                    <th rowspan="2" class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider border-l" style="border-color: var(--border-color);">Комментарий</th>
+                                    <th rowspan="2" class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider border-l" style="border-color: var(--border-color);">Действия</th>
+                                </tr>
+                                <tr>
+                                    <th class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider border-l" style="border-color: var(--border-color);">Темп.</th>
+                                    <th class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider">Влаж.</th>
+                                    <th class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider">Давл.</th>
+                                    <th class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider border-l" style="border-color: var(--border-color);">Cyan</th>
+                                    <th class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider">Magenta</th>
+                                    <th class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider">Yellow</th>
+                                    <th class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider">Black</th>
+                                    <th class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider">White</th>
+                                </tr>
+                            </thead>
+                            <tbody id="klimat-table-body"></tbody>
+                        </table>
                     </div>
                 </div>
-                <div id="loading-state" class="text-center text-secondary py-8">Загрузка данных...</div>
-                <div class="overflow-x-auto hidden" id="table-container">
-                    <table class="min-w-full divide-y" style="border-color: var(--border-color);">
-                        <thead class="table-header">
-                             <tr>
-                                <th scope="col" rowspan="2" class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider">Время</th>
-                                <th scope="colgroup" colspan="3" class="px-6 py-3 text-center text-xs font-medium text-secondary uppercase tracking-wider border-b border-l" style="border-color: var(--border-color);">Климат в помещении</th>
-                                <th scope="colgroup" colspan="5" class="px-6 py-3 text-center text-xs font-medium text-secondary uppercase tracking-wider border-b border-l" style="border-color: var(--border-color);">Отрицательное давление GIP</th>
-                                <th scope="col" rowspan="2" class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider border-l" style="border-color: var(--border-color);">Комментарий</th>
-                                <th scope="col" rowspan="2" class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider border-l" style="border-color: var(--border-color);">Действия</th>
-                            </tr>
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider border-l" style="border-color: var(--border-color);">Темп.</th>
-                                <th scope="col" class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider">Влаж.</th>
-                                <th scope="col" class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider">Давл.</th>
-                                <th scope="col" class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider border-l" style="border-color: var(--border-color);">Cyan</th>
-                                <th scope="col" class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider">Magenta</th>
-                                <th scope="col" class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider">Yellow</th>
-                                <th scope="col" class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider">Black</th>
-                                <th scope="col" class="px-6 py-3 text-center align-middle text-xs font-medium text-secondary uppercase tracking-wider">White</th>
-                            </tr>
-                        </thead>
-                        <tbody id="data-table-body" style="background-color: transparent; border-color: var(--border-color);">
-                            <!-- Данные будут вставлены здесь -->
-                        </tbody>
-                    </table>
+            </div>
+
+            <!-- Air Quality View -->
+            <div id="vozduh-view" class="hidden">
+                 <div class="card">
+                    <h2 class="text-2xl font-semibold mb-6">Добавить запись о качестве воздуха</h2>
+                    <form id="add-vozduh-form" class="space-y-4">
+                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="vozduh-date" class="block text-sm font-medium text-secondary">Дата</label>
+                                <input type="date" id="vozduh-date" class="mt-1 form-input" required>
+                            </div>
+                            <div>
+                                <label for="vozduh-time" class="block text-sm font-medium text-secondary">Время</label>
+                                <input type="time" id="vozduh-time" class="mt-1 form-input" required>
+                            </div>
+                        </div>
+                        <div class="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                            <div><label for="hcho" class="block text-sm font-medium text-secondary">HCHO</label><input type="number" step="0.001" id="hcho" class="mt-1 form-input" placeholder="0.010"></div>
+                            <div><label for="tvoc" class="block text-sm font-medium text-secondary">TVOC</label><input type="number" step="0.01" id="tvoc" class="mt-1 form-input" placeholder="0.08"></div>
+                            <div><label for="pm25" class="block text-sm font-medium text-secondary">PM2.5</label><input type="number" step="0.1" id="pm25" class="mt-1 form-input" placeholder="5.0"></div>
+                            <div><label for="pm10" class="block text-sm font-medium text-secondary">PM10</label><input type="number" step="0.1" id="pm10" class="mt-1 form-input" placeholder="8.0"></div>
+                            <div><label for="co2" class="block text-sm font-medium text-secondary">CO2</label><input type="number" step="1" id="co2" class="mt-1 form-input" placeholder="450"></div>
+                        </div>
+                        <div>
+                            <label for="vozduh-comment" class="block text-sm font-medium text-secondary">Комментарий</label>
+                            <textarea id="vozduh-comment" rows="2" class="mt-1 form-textarea" placeholder="Введите комментарий..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-submit w-full mt-4">Добавить</button>
+                    </form>
+                </div>
+                 <div class="card mt-8">
+                    <h2 class="text-2xl font-semibold mb-6">Журнал качества воздуха</h2>
+                    <div id="vozduh-loading" class="text-center text-secondary py-8">Загрузка данных...</div>
+                    <div id="vozduh-table-container" class="overflow-x-auto hidden">
+                        <table class="min-w-full divide-y" style="border-color: var(--border-color);">
+                            <thead class="table-header">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Время</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">HCHO (мг/м³)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">TVOC (мг/м³)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">PM2.5 (мкг/м³)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">PM10 (мкг/м³)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">CO2 (ppm)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Комментарий</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vozduh-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GIP History View -->
+            <div id="history-view" class="hidden">
+                 <div class="card">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-semibold">История изменений GIP</h2>
+                        <button id="back-to-main-btn" class="btn btn-secondary px-4 py-2 text-sm w-auto">Назад</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y" style="border-color: var(--border-color);">
+                            <thead class="table-header">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Дата</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Пользователь</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Действие</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Детали</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </main>
-        
-        <div id="history-view" class="hidden">
-            <div class="card">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-semibold">История изменений</h2>
-                    <button id="back-to-main-btn" class="btn btn-submit btn-secondary px-4 py-2 text-sm w-auto">Назад</button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y" style="border-color: var(--border-color);">
-                         <thead class="table-header">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Дата</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Пользователь</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Действие</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Детали</th>
-                            </tr>
-                         </thead>
-                         <tbody id="history-table-body">
-                            <!-- История будет здесь -->
-                         </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
     </div>
 
     <!-- Edit Modal -->
@@ -361,15 +397,38 @@
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, writeBatch, getDocs, doc, getDoc, updateDoc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, getDocs, doc, updateDoc, deleteDoc, orderBy, Timestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         document.addEventListener('DOMContentLoaded', () => {
             
+            // --- Firebase Configuration (Using Klimat-GIP as the primary) ---
+            const firebaseConfig = {
+                apiKey: "AIzaSyAfGrhtzScHVYMb4Li1muz56jzZdbBz6Ac",
+                authDomain: "klimat-gip.firebaseapp.com",
+                projectId: "klimat-gip",
+                storageBucket: "klimat-gip.appspot.com",
+                messagingSenderId: "369527961205",
+                appId: "1:369527961205:web:8c57ab4e68725832e8b625"
+            };
+            
+            // --- Initialize Firebase ---
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            const auth = getAuth(app);
+            const appId = firebaseConfig.projectId;
+
+            // --- App State ---
+            const ADMIN_EMAIL = 'lequangduc19865@gmail.com';
+            let currentUserEmail = null;
+            let unsubscribeKlimat, unsubscribeKlimatHistory, unsubscribeVozduh;
+            let allKlimatEntries = [];
+            let allVozduhRecords = [];
+            let currentEditContext = { id: null, type: null };
+
             // --- UI Elements ---
             const authContainer = document.getElementById('auth-container');
             const appContainer = document.getElementById('app-container');
-            const mainView = document.getElementById('main-view');
-            const historyView = document.getElementById('history-view');
+            // Auth
             const loginView = document.getElementById('login-view');
             const registerView = document.getElementById('register-view');
             const showRegisterBtn = document.getElementById('show-register');
@@ -380,39 +439,27 @@
             const userEmailEl = document.getElementById('user-email');
             const loginError = document.getElementById('login-error');
             const registerError = document.getElementById('register-error');
-            const historyBtn = document.getElementById('history-btn');
-            const backToMainBtn = document.getElementById('back-to-main-btn');
+            // Views & Tabs
+            const klimatView = document.getElementById('klimat-view');
+            const vozduhView = document.getElementById('vozduh-view');
+            const historyView = document.getElementById('history-view');
+            const tabKlimat = document.getElementById('tab-klimat');
+            const tabVozduh = document.getElementById('tab-vozduh');
+            // Modals & General
             const editModal = document.getElementById('edit-modal');
             const editForm = document.getElementById('edit-form');
             const cancelEditBtn = document.getElementById('cancel-edit-btn');
             const editCommentTextarea = document.getElementById('edit-comment');
             const themeToggle = document.getElementById('theme-toggle');
             const docHtml = document.documentElement;
-
-
-            // --- App State ---
-            const ADMIN_EMAIL = 'lequangduc19865@gmail.com';
-            let currentUserEmail = null;
-            let unsubscribeMain, unsubscribeHistory;
-            let allEntries = []; 
-
-
-            // --- Firebase Configuration ---
-            const firebaseConfig = {
-                apiKey: "AIzaSyAfGrhtzScHVYMb4Li1muz56jzZdbBz6Ac",
-                authDomain: "klimat-gip.firebaseapp.com",
-                projectId: "klimat-gip",
-                storageBucket: "klimat-gip.appspot.com",
-                messagingSenderId: "369527961205",
-                appId: "1:369527961205:web:8c57ab4e68725832e8b625"
-            };
-            
-            const appId = firebaseConfig.projectId;
-            
-            // --- Initialize Firebase ---
-            const app = initializeApp(firebaseConfig);
-            const db = getFirestore(app);
-            const auth = getAuth(app);
+            // Klimat specific
+            const addKlimatForm = document.getElementById('add-klimat-form');
+            const klimatTableBody = document.getElementById('klimat-table-body');
+            const historyBtn = document.getElementById('history-btn');
+            const backToMainBtn = document.getElementById('back-to-main-btn');
+            // Vozduh specific
+            const addVozduhForm = document.getElementById('add-vozduh-form');
+            const vozduhTableBody = document.getElementById('vozduh-table-body');
 
 
             // --- Authentication State Observer ---
@@ -422,7 +469,7 @@
                     authContainer.classList.add('hidden');
                     appContainer.classList.remove('hidden');
                     userEmailEl.textContent = user.email;
-                    if(user.email === ADMIN_EMAIL) {
+                    if (user.email === ADMIN_EMAIL) {
                         historyBtn.classList.remove('hidden');
                     }
                     initializeAppLogic();
@@ -432,16 +479,16 @@
                     appContainer.classList.add('hidden');
                     userEmailEl.textContent = '';
                     historyBtn.classList.add('hidden');
-                    if (unsubscribeMain) unsubscribeMain();
-                    if (unsubscribeHistory) unsubscribeHistory();
+                    // Unsubscribe from all listeners on logout
+                    if (unsubscribeKlimat) unsubscribeKlimat();
+                    if (unsubscribeKlimatHistory) unsubscribeKlimatHistory();
+                    if (unsubscribeVozduh) unsubscribeVozduh();
                 }
             });
 
-            // --- View Toggling ---
+            // --- Authentication Handlers ---
             showRegisterBtn.addEventListener('click', (e) => { e.preventDefault(); loginView.classList.add('hidden'); registerView.classList.remove('hidden'); });
             showLoginBtn.addEventListener('click', (e) => { e.preventDefault(); registerView.classList.add('hidden'); loginView.classList.remove('hidden'); });
-           
-            // --- Auth Handlers ---
             registerForm.addEventListener('submit', (e) => { e.preventDefault(); handleRegistration(); });
             loginForm.addEventListener('submit', (e) => { e.preventDefault(); handleLogin(); });
             logoutBtn.addEventListener('click', () => { signOut(auth).catch(error => console.error("Logout error:", error)); });
@@ -461,342 +508,532 @@
             function handleAuthError(errorElement) {
                 return function(error) {
                     console.error("Auth error:", error);
-                    if (error.code === 'auth/operation-not-allowed') {
-                         errorElement.textContent = `Ошибка: Аутентификация по Email/паролю не включена. Пожалуйста, убедитесь, что она активирована в консоли Firebase для проекта '${appId}'.`;
-                    } else {
-                        errorElement.textContent = "Ошибка: " + error.message;
-                    }
+                    errorElement.textContent = "Ошибка: " + error.message;
                     errorElement.classList.remove('hidden');
                 }
             }
-
-
+            
+            // --- Main App Logic Initializer ---
             function initializeAppLogic() {
-                const dataCollectionRef = collection(db, `artifacts/${appId}/public/data/gip_stats`);
-                const historyCollectionRef = collection(db, `artifacts/${appId}/public/data/gip_stats_history`);
-
-                function setupEventListeners() {
-                    document.getElementById('add-entry-form').addEventListener('submit', handleAddEntry);
-                    document.getElementById('data-table-body').addEventListener('click', handleTableActions);
-                    cancelEditBtn.addEventListener('click', () => editModal.classList.add('hidden'));
-                    editForm.addEventListener('submit', handleUpdateComment);
-                    historyBtn.addEventListener('click', () => { mainView.classList.add('hidden'); historyView.classList.remove('hidden'); initializeHistoryView(); });
-                    backToMainBtn.addEventListener('click', () => { historyView.classList.add('hidden'); mainView.classList.remove('hidden'); if(unsubscribeHistory) unsubscribeHistory(); });
-                    document.getElementById('search-btn').addEventListener('click', handleSearch);
-                    document.getElementById('reset-btn').addEventListener('click', resetSearch);
-                }
-
-                // Theme Toggle Logic
-                function applyTheme() {
-                    if (themeToggle.checked) {
-                        docHtml.classList.add('light');
-                        localStorage.setItem('theme', 'light');
-                    } else {
-                        docHtml.classList.remove('light');
-                        localStorage.setItem('theme', 'dark');
-                    }
-                }
-
-                if (localStorage.getItem('theme') === 'light') {
-                    themeToggle.checked = true;
-                } else {
-                    themeToggle.checked = false;
-                }
-                applyTheme();
-                themeToggle.addEventListener('change', applyTheme);
-
-
-                function listenForDataChanges() {
-                    const q = query(dataCollectionRef, orderBy('date', 'desc'));
-                    unsubscribeMain = onSnapshot(q, async (snapshot) => {
-                        allEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        renderTable(allEntries);
-                    }, handleError('Ошибка загрузки данных.'));
-                }
-                
-                function initializeHistoryView() {
-                    const q = query(historyCollectionRef, orderBy('timestamp', 'desc'));
-                    unsubscribeHistory = onSnapshot(q, (snapshot) => {
-                        const historyData = snapshot.docs.map(doc => doc.data());
-                        renderHistory(historyData);
-                    }, handleError('Ошибка загрузки истории.'));
-                }
-                 function handleSearch() {
-                    const searchDateVal = document.getElementById('search-date').value;
-                    if (!searchDateVal) {
-                        renderTable(allEntries);
-                        return;
-                    }
-                    const searchDate = new Date(searchDateVal);
-                    
-                    const filteredData = allEntries.filter(entry => {
-                        const entryDate = entry.date.toDate();
-                        return entryDate.getFullYear() === searchDate.getFullYear() &&
-                               entryDate.getMonth() === searchDate.getMonth() &&
-                               entryDate.getDate() === searchDate.getDate();
-                    });
-                    renderTable(filteredData);
-                }
-
-                function resetSearch() {
-                    document.getElementById('search-date').value = '';
-                    renderTable(allEntries);
-                }
-
-
-                async function handleAddEntry(e) {
-                    e.preventDefault();
-                     const newEntryData = getFormData();
-                     if (!newEntryData) return;
-                    
-                    try {
-                        const docRef = await addDoc(dataCollectionRef, newEntryData);
-                        
-                        const logDetails = { ...newEntryData };
-                        delete logDetails.createdAt; 
-                        logDetails.date = logDetails.date.toISOString();
-                        
-                        await logHistory('create', docRef.id, { newData: logDetails });
-                        e.target.reset();
-                        document.getElementById('custom-comment-wrapper').classList.add('hidden');
-                    } catch (error) {
-                        handleError('Не удалось добавить запись.')(error);
-                    }
-                }
-
-                function handleTableActions(e) {
-                    const button = e.target.closest('button');
-                    if (!button) return;
-    
-                    const docId = button.dataset.id;
-                    if (!docId) return;
-
-                    if (button.classList.contains('edit-btn')) {
-                        handleEditComment(docId);
-                    } else if (button.classList.contains('delete-btn')) {
-                        if (confirm('Вы уверены, что хотите удалить эту запись?')) {
-                            handleDeleteEntry(docId);
-                        }
-                    }
-                }
-                
-                async function handleEditComment(docId) {
-                    try {
-                        const docRef = doc(dataCollectionRef, docId);
-                        const docSnap = await getDoc(docRef);
-                        if (docSnap.exists()) {
-                            editCommentTextarea.value = docSnap.data().comment || '';
-                            editForm.dataset.id = docId;
-                            editModal.classList.remove('hidden');
-                        }
-                    } catch(error) {
-                        handleError('Не удалось загрузить запись для редактирования.')(error);
-                    }
-                }
-
-                async function handleUpdateComment(e) {
-                    e.preventDefault();
-                    const docId = e.target.dataset.id;
-                    const newComment = editCommentTextarea.value;
-                    const docRef = doc(dataCollectionRef, docId);
-
-                    try {
-                        const docSnap = await getDoc(docRef);
-                        const oldComment = docSnap.data().comment;
-                        
-                        await updateDoc(docRef, { comment: newComment });
-                        await logHistory('update', docId, { oldComment, newComment });
-                        
-                        editModal.classList.add('hidden');
-                    } catch(error) {
-                        handleError('Не удалось обновить комментарий.')(error);
-                    }
-                }
-
-                async function handleDeleteEntry(docId) {
-                     const docRef = doc(dataCollectionRef, docId);
-                     try {
-                        const docSnap = await getDoc(docRef);
-                        const deletedData = docSnap.data();
-                        const logDetails = { ...deletedData, date: deletedData.date.toDate().toISOString() };
-                        
-                        await deleteDoc(docRef);
-                        await logHistory('delete', docId, { deletedData: logDetails });
-                     } catch(error) {
-                        handleError('Не удалось удалить запись.')(error);
-                     }
-                }
-
-                async function logHistory(action, docId, details) {
-                    const logEntry = {
-                        action,
-                        docId,
-                        userEmail: currentUserEmail,
-                        timestamp: serverTimestamp(),
-                        details
-                    };
-                    try {
-                        await addDoc(historyCollectionRef, logEntry);
-                    } catch(error) {
-                        console.error("Failed to log history:", error);
-                    }
-                }
-
-                 function renderTable(data) {
-                    const tableBody = document.getElementById('data-table-body');
-                    const loadingState = document.getElementById('loading-state');
-                    const tableContainer = document.getElementById('table-container');
-                    tableBody.innerHTML = '';
-
-                    if (data.length === 0) {
-                        loadingState.textContent = 'Нет данных для отображения.';
-                        loadingState.classList.remove('hidden');
-                        tableContainer.classList.add('hidden');
-                        return;
-                    }
-
-                    loadingState.classList.add('hidden');
-                    tableContainer.classList.remove('hidden');
-                    
-                    const groupedData = {};
-                    data.forEach(entry => {
-                        const entryDate = entry.date.toDate ? entry.date.toDate() : new Date(entry.date);
-                        const dateKey = entryDate.toDateString();
-                        if (!groupedData[dateKey]) groupedData[dateKey] = [];
-                        groupedData[dateKey].push({ ...entry, date: entryDate });
-                    });
-
-                    const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(b) - new Date(a));
-
-                    sortedDates.forEach(dateKey => {
-                        const date = new Date(dateKey);
-                        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                        const formattedDate = date.toLocaleDateString('ru-RU', options);
-                        
-                        const dateRow = document.createElement('tr');
-                        dateRow.innerHTML = `<td colspan="11" class="px-6 py-2 text-sm font-semibold" style="background-color: var(--date-header-bg); color: var(--text-primary);">${formattedDate}</td>`;
-                        tableBody.appendChild(dateRow);
-
-                        const entriesForDay = groupedData[dateKey].sort((a, b) => a.date - b.date);
-
-                        entriesForDay.forEach(entry => {
-                            const row = document.createElement('tr');
-                            const isProblem = entry.comment && entry.comment.trim() !== 'Прострелов, полос нет';
-                            
-                            row.className = "hover-row";
-                             if (isProblem) {
-                                row.style.backgroundColor = 'var(--problem-bg)';
-                            }
-                            row.style.transition = 'background-color 0.3s';
-                            
-                            row.addEventListener('mouseover', () => {
-                                 row.style.backgroundColor = isProblem ? 'var(--problem-hover-bg)' : 'var(--hover-bg)';
-                            });
-                            row.addEventListener('mouseout', () => {
-                                row.style.backgroundColor = isProblem ? 'var(--problem-bg)' : 'transparent';
-                            });
-                            
-                            const formattedTime = entry.date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-
-                            row.innerHTML = `
-                                <td class="px-6 py-4 text-center align-middle text-sm whitespace-normal break-words text-secondary">${formattedTime}</td>
-                                <td class="px-6 py-4 text-center align-middle text-sm whitespace-normal break-words text-secondary">${entry.temp ?? ''}</td>
-                                <td class="px-6 py-4 text-center align-middle text-sm whitespace-normal break-words text-secondary">${entry.humidity ?? ''}</td>
-                                <td class="px-6 py-4 text-center align-middle text-sm whitespace-normal break-words text-secondary">${entry.pressure ?? ''}</td>
-                                <td class="px-6 py-4 text-center align-middle text-sm whitespace-normal break-words text-secondary">${entry.cyan ?? ''}</td>
-                                <td class="px-6 py-4 text-center align-middle text-sm whitespace-normal break-words text-secondary">${entry.magenta ?? ''}</td>
-                                <td class="px-6 py-4 text-center align-middle text-sm whitespace-normal break-words text-secondary">${entry.yellow ?? ''}</td>
-                                <td class="px-6 py-4 text-center align-middle text-sm whitespace-normal break-words text-secondary">${entry.black ?? ''}</td>
-                                <td class="px-6 py-4 text-center align-middle text-sm whitespace-normal break-words text-secondary">${entry.white ?? ''}</td>
-                                <td class="px-6 py-4 text-center align-middle text-sm whitespace-normal break-words text-secondary">${entry.comment || ''}</td>
-                                <td class="px-6 py-4 text-center align-middle text-sm whitespace-normal break-words text-secondary">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <button data-id="${entry.id}" class="edit-btn p-1 hover:text-yellow-400">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                        </button>
-                                        <button data-id="${entry.id}" class="delete-btn p-1 hover:text-red-500">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                        </button>
-                                    </div>
-                                </td>
-                            `;
-                            tableBody.appendChild(row);
-                        });
-                    });
-                }
-
-                function renderHistory(historyData) {
-                    const historyBody = document.getElementById('history-table-body');
-                    historyBody.innerHTML = '';
-                    if (historyData.length === 0) {
-                        historyBody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-secondary">История изменений пуста.</td></tr>';
-                        return;
-                    }
-                    historyData.forEach(log => {
-                        const row = document.createElement('tr');
-                        const date = log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString('ru-RU') : 'N/A';
-                        let detailsHtml = '';
-                        if (log.action === 'create') {
-                            const createdDate = new Date(log.details.newData.date).toLocaleString('ru-RU');
-                            detailsHtml = `Создана запись от ${createdDate}. Комментарий: "${log.details.newData.comment}"`;
-                        } else if (log.action === 'delete') {
-                            const deletedDate = new Date(log.details.deletedData.date).toLocaleString('ru-RU');
-                            detailsHtml = `Удалена запись от ${deletedDate}. Комментарий был: "${log.details.deletedData.comment}"`;
-                        } else if (log.action === 'update') {
-                            detailsHtml = `Комментарий изменен с "${log.details.oldComment}" на "${log.details.newComment}"`;
-                        }
-
-                        row.innerHTML = `
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">${date}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary">${log.userEmail}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary">${log.action}</td>
-                            <td class="px-6 py-4 text-sm text-secondary">${detailsHtml}</td>
-                        `;
-                        historyBody.appendChild(row);
-                    });
-                }
-
-                function getFormData() {
-                    const dateValue = document.getElementById('entry-date').value;
-                    const timeValue = document.getElementById('entry-time').value;
-                    if (!dateValue || !timeValue) {
-                        alert("Пожалуйста, выберите дату и время.");
-                        return null;
-                    }
-                    const combinedDateTime = new Date(`${dateValue}T${timeValue}`);
-
-                    const commentSelect = document.getElementById('comment');
-                    let commentValue = commentSelect.value;
-                    if (commentValue === 'other') {
-                        commentValue = document.getElementById('custom-comment').value || '';
-                    }
-
-                    return {
-                        date: combinedDateTime,
-                        temp: parseFloat(document.getElementById('temp').value),
-                        humidity: parseFloat(document.getElementById('humidity').value),
-                        pressure: parseFloat(document.getElementById('pressure').value),
-                        cyan: parseFloat(document.getElementById('cyan').value),
-                        magenta: parseFloat(document.getElementById('magenta').value),
-                        yellow: parseFloat(document.getElementById('yellow').value),
-                        black: parseFloat(document.getElementById('black').value),
-                        white: parseFloat(document.getElementById('white').value),
-                        comment: commentValue,
-                        createdAt: serverTimestamp()
-                    };
-                }
-
-                function handleError(message) {
-                    return function(error) {
-                        console.error(message, error);
-                        document.getElementById('loading-state').textContent = message;
-                    }
-                }
-
                 setupEventListeners();
-                listenForDataChanges();
+                listenForKlimatDataChanges();
+                listenForVozduhDataChanges();
+                seedVozduhDataFromPDF(); // Call the seeding function
+                setDefaultDateTimeForVozduh(); // Set default date/time for air quality form
             }
 
+            // --- Theme Toggle Logic ---
+            function applyTheme() {
+                if (themeToggle.checked) {
+                    docHtml.classList.add('light');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    docHtml.classList.remove('light');
+                    localStorage.setItem('theme', 'dark');
+                }
+            }
+            if (localStorage.getItem('theme') === 'light') themeToggle.checked = true;
+            else themeToggle.checked = false;
+            applyTheme();
+            themeToggle.addEventListener('change', applyTheme);
+
+            // --- Tab Navigation ---
+            function handleTabClick(event) {
+                const activeTab = event.currentTarget.id;
+
+                // Toggle active class on tabs
+                tabKlimat.classList.toggle('active', activeTab === 'tab-klimat');
+                tabVozduh.classList.toggle('active', activeTab === 'tab-vozduh');
+
+                // Show/hide views
+                klimatView.classList.toggle('hidden', activeTab !== 'tab-klimat');
+                vozduhView.classList.toggle('hidden', activeTab !== 'tab-vozduh');
+                
+                // Hide history view if it was open
+                historyView.classList.add('hidden');
+            }
+            tabKlimat.addEventListener('click', handleTabClick);
+            tabVozduh.addEventListener('click', handleTabClick);
+            
+
+            // #############################################
+            // #         KLIMAT GIP SECTION                #
+            // #############################################
+            const klimatDataRef = collection(db, `artifacts/${appId}/public/data/gip_stats`);
+            const klimatHistoryRef = collection(db, `artifacts/${appId}/public/data/gip_stats_history`);
+
+            function listenForKlimatDataChanges() {
+                const q = query(klimatDataRef, orderBy('date', 'desc'));
+                unsubscribeKlimat = onSnapshot(q, (snapshot) => {
+                    allKlimatEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderKlimatTable(allKlimatEntries);
+                }, (error) => console.error("Error loading Klimat data:", error));
+            }
+            
+            function renderKlimatTable(data) {
+                const tableBody = klimatTableBody;
+                const loadingState = document.getElementById('klimat-loading');
+                const tableContainer = document.getElementById('klimat-table-container');
+                tableBody.innerHTML = '';
+
+                if (data.length === 0) {
+                    loadingState.textContent = 'Нет данных для отображения.';
+                    loadingState.classList.remove('hidden');
+                    tableContainer.classList.add('hidden');
+                    return;
+                }
+
+                loadingState.classList.add('hidden');
+                tableContainer.classList.remove('hidden');
+                
+                const groupedData = {};
+                data.forEach(entry => {
+                    const entryDate = entry.date.toDate();
+                    const dateKey = entryDate.toDateString();
+                    if (!groupedData[dateKey]) groupedData[dateKey] = [];
+                    groupedData[dateKey].push({ ...entry, date: entryDate });
+                });
+
+                const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(b) - new Date(a));
+
+                sortedDates.forEach(dateKey => {
+                    const date = new Date(dateKey);
+                    const formattedDate = date.toLocaleDateString('ru-RU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    
+                    const dateRow = document.createElement('tr');
+                    dateRow.innerHTML = `<td colspan="11" class="px-6 py-2 text-sm font-semibold" style="background-color: var(--date-header-bg);">${formattedDate}</td>`;
+                    tableBody.appendChild(dateRow);
+
+                    const entriesForDay = groupedData[dateKey].sort((a, b) => a.date - b.date);
+                    entriesForDay.forEach(entry => {
+                        const row = document.createElement('tr');
+                        const isProblem = entry.comment && entry.comment.trim() !== 'Прострелов, полос нет';
+                        
+                        if (isProblem) row.style.backgroundColor = 'var(--problem-bg)';
+                        row.style.transition = 'background-color 0.3s';
+                        
+                        row.addEventListener('mouseover', () => { row.style.backgroundColor = isProblem ? 'var(--problem-hover-bg)' : 'var(--hover-bg)'; });
+                        row.addEventListener('mouseout', () => { row.style.backgroundColor = isProblem ? 'var(--problem-bg)' : 'transparent'; });
+                        
+                        const formattedTime = entry.date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+                        row.innerHTML = `
+                            <td class="px-6 py-4 text-center align-middle text-sm">${formattedTime}</td>
+                            <td class="px-6 py-4 text-center align-middle text-sm">${entry.temp ?? ''}</td>
+                            <td class="px-6 py-4 text-center align-middle text-sm">${entry.humidity ?? ''}</td>
+                            <td class="px-6 py-4 text-center align-middle text-sm">${entry.pressure ?? ''}</td>
+                            <td class="px-6 py-4 text-center align-middle text-sm">${entry.cyan ?? ''}</td>
+                            <td class="px-6 py-4 text-center align-middle text-sm">${entry.magenta ?? ''}</td>
+                            <td class="px-6 py-4 text-center align-middle text-sm">${entry.yellow ?? ''}</td>
+                            <td class="px-6 py-4 text-center align-middle text-sm">${entry.black ?? ''}</td>
+                            <td class="px-6 py-4 text-center align-middle text-sm">${entry.white ?? ''}</td>
+                            <td class="px-6 py-4 text-center align-middle text-sm">${entry.comment || ''}</td>
+                            <td class="px-6 py-4 text-center align-middle text-sm">
+                                <div class="flex items-center justify-center gap-2">
+                                    <button data-id="${entry.id}" data-type="klimat" class="edit-btn p-1 hover:text-yellow-400">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                    </button>
+                                    <button data-id="${entry.id}" class="delete-klimat-btn p-1 hover:text-red-500">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    </button>
+                                </div>
+                            </td>`;
+                        tableBody.appendChild(row);
+                    });
+                });
+            }
+
+            async function handleAddKlimatEntry(e) {
+                e.preventDefault();
+                const dateValue = document.getElementById('klimat-date').value;
+                const timeValue = document.getElementById('klimat-time').value;
+                if (!dateValue || !timeValue) return;
+
+                const commentSelect = document.getElementById('klimat-comment');
+                let commentValue = commentSelect.value;
+                if (commentValue === 'other') {
+                    commentValue = document.getElementById('klimat-custom-comment').value || '';
+                }
+                
+                const newEntryData = {
+                    date: new Date(`${dateValue}T${timeValue}`),
+                    temp: parseFloat(document.getElementById('temp').value),
+                    humidity: parseFloat(document.getElementById('humidity').value),
+                    pressure: parseFloat(document.getElementById('pressure').value),
+                    cyan: parseFloat(document.getElementById('cyan').value),
+                    magenta: parseFloat(document.getElementById('magenta').value),
+                    yellow: parseFloat(document.getElementById('yellow').value),
+                    black: parseFloat(document.getElementById('black').value),
+                    white: parseFloat(document.getElementById('white').value),
+                    comment: commentValue,
+                    createdAt: serverTimestamp()
+                };
+
+                try {
+                    const docRef = await addDoc(klimatDataRef, newEntryData);
+                    const logDetails = { ...newEntryData, date: newEntryData.date.toISOString() };
+                    delete logDetails.createdAt;
+                    await logKlimatHistory('create', docRef.id, { newData: logDetails });
+                    e.target.reset();
+                    document.getElementById('klimat-custom-comment-wrapper').classList.add('hidden');
+                } catch (error) {
+                    console.error("Failed to add Klimat entry:", error);
+                }
+            }
+            
+            async function handleDeleteKlimatEntry(docId) {
+                const docRef = doc(klimatDataRef, docId);
+                try {
+                    const docSnap = await getDoc(docRef);
+                    const deletedData = docSnap.data();
+                    const logDetails = { ...deletedData, date: deletedData.date.toDate().toISOString() };
+                    
+                    await deleteDoc(docRef);
+                    await logKlimatHistory('delete', docId, { deletedData: logDetails });
+                } catch(error) {
+                    console.error("Failed to delete Klimat entry:", error);
+                }
+            }
+            
+            // #############################################
+            // #        VOZDUH (AIR QUALITY) SECTION       #
+            // #############################################
+            const vozduhDataRef = collection(db, `artifacts/${appId}/public/data/air_quality_records`);
+
+            const vozduhParams = {
+                hcho: { thresholds: { good: 0.01, moderate: 0.05 } },
+                tvoc: { thresholds: { good: 0.3, moderate: 1.0 } },
+                pm25: { thresholds: { good: 15, moderate: 35 } },
+                pm10: { thresholds: { good: 45, moderate: 75 } },
+                co2:  { thresholds: { good: 800, moderate: 1200 } }
+            };
+
+            function listenForVozduhDataChanges() {
+                const q = query(vozduhDataRef, orderBy('datetime', 'desc'));
+                unsubscribeVozduh = onSnapshot(q, (snapshot) => {
+                    allVozduhRecords = snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        const jsDate = data.datetime.toDate();
+                        return { id: doc.id, ...data, datetime: jsDate, date: jsDate.toISOString().slice(0, 10) }
+                    });
+                    renderVozduhTable(allVozduhRecords);
+                }, (error) => console.error("Error loading Vozduh data:", error));
+            }
+
+            function renderVozduhTable(data) {
+                 const tableBody = vozduhTableBody;
+                const loadingState = document.getElementById('vozduh-loading');
+                const tableContainer = document.getElementById('vozduh-table-container');
+                tableBody.innerHTML = '';
+                
+                if (data.length === 0) {
+                    loadingState.textContent = 'Нет данных. Добавьте первую запись.';
+                    loadingState.classList.remove('hidden');
+                    tableContainer.classList.add('hidden');
+                    return;
+                }
+                
+                loadingState.classList.add('hidden');
+                tableContainer.classList.remove('hidden');
+
+                let lastDate = null;
+                data.forEach(record => {
+                    const currentDate = record.date;
+                    if (currentDate !== lastDate) {
+                        const formattedDate = new Date(currentDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+                        const headerRow = document.createElement('tr');
+                        headerRow.innerHTML = `<td colspan="8" class="px-6 py-2 font-bold" style="background-color: var(--date-header-bg);">${formattedDate}</td>`;
+                        tableBody.appendChild(headerRow);
+                        lastDate = currentDate;
+                    }
+                    
+                    const row = document.createElement('tr');
+                    row.style.transition = 'background-color 0.3s';
+                    row.addEventListener('mouseover', () => { row.style.backgroundColor = 'var(--hover-bg)'; });
+                    row.addEventListener('mouseout', () => { row.style.backgroundColor = 'transparent'; });
+                    
+                    const formattedTime = record.datetime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+                    let cellsHTML = `<td class="px-6 py-4 font-medium whitespace-nowrap">${formattedTime}</td>`;
+                    Object.keys(vozduhParams).forEach(key => {
+                        const value = record[key];
+                        const statusClass = (v, c) => v === null || v === undefined ? '' : v > c.thresholds.moderate ? 'status-bad' : v > c.thresholds.good ? 'status-moderate' : 'status-good';
+                        const formattedValue = value !== null ? value.toFixed(key === 'hcho' ? 3 : (key === 'co2' ? 0 : 2)) : '--';
+                        cellsHTML += `<td class="px-6 py-4"><span class="status-dot ${statusClass(value, vozduhParams[key])}"></span><span>${formattedValue}</span></td>`;
+                    });
+                    
+                    cellsHTML += `
+                        <td class="px-6 py-4 text-secondary whitespace-pre-wrap">${record.comment || '--'}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center space-x-2">
+                                <button title="Изменить комментарий" class="edit-btn p-1 hover:text-yellow-400" data-type="vozduh" data-id="${record.id}">
+                                    <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"></path></svg>
+                                </button>
+                                <button title="Удалить запись" class="delete-vozduh-btn p-1 hover:text-red-500" data-id="${record.id}">
+                                    <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                        </td>`;
+                    row.innerHTML = cellsHTML;
+                    tableBody.appendChild(row);
+                });
+            }
+            
+            async function handleAddVozduhRecord(event) {
+                event.preventDefault();
+                const date = document.getElementById('vozduh-date').value;
+                const time = document.getElementById('vozduh-time').value;
+
+                const newRecord = {
+                    datetime: Timestamp.fromDate(new Date(`${date}T${time}`)),
+                    hcho: document.getElementById('hcho').value ? parseFloat(document.getElementById('hcho').value) : null,
+                    tvoc: document.getElementById('tvoc').value ? parseFloat(document.getElementById('tvoc').value) : null,
+                    pm25: document.getElementById('pm25').value ? parseFloat(document.getElementById('pm25').value) : null,
+                    pm10: document.getElementById('pm10').value ? parseFloat(document.getElementById('pm10').value) : null,
+                    co2:  document.getElementById('co2').value ? parseInt(document.getElementById('co2').value, 10) : null,
+                    comment: document.getElementById('vozduh-comment').value.trim() || null
+                };
+
+                try {
+                    await addDoc(vozduhDataRef, newRecord);
+                    event.target.reset();
+                    setDefaultDateTimeForVozduh();
+                } catch (e) {
+                    console.error("Error adding Vozduh document: ", e);
+                }
+            }
+            
+            async function handleDeleteVozduhEntry(docId) {
+                if (confirm('Вы уверены, что хотите удалить эту запись?')) {
+                    await deleteDoc(doc(vozduhDataRef, docId));
+                }
+            }
+
+            // #############################################
+            // #        PDF DATA SEEDING SECTION           #
+            // #############################################
+            
+            async function seedVozduhDataFromPDF() {
+                const snapshot = await getDocs(query(vozduhDataRef));
+                if (!snapshot.empty) {
+                    console.log("Air quality data already exists. Seeding skipped.");
+                    return;
+                }
+                
+                console.log("Air quality collection is empty. Seeding data from PDF...");
+
+                const pdfData = [
+                    { date: "2025-08-13", time: "09:10", hcho: 0.112, tvoc: 0.308, pm25: 0.11, pm10: 0.15, co2: 1080, comment: null },
+                    { date: "2025-08-13", time: "18:52", hcho: 0.351, tvoc: 0.960, pm25: 0.14, pm10: 0.19, co2: 1762, comment: null },
+                    { date: "2025-08-14", time: "12:00", hcho: 0.584, tvoc: 1.576, pm25: 0.27, pm10: 0.37, co2: 2043, comment: "В середине рабочего дня не хватало кислорода." },
+                    { date: "2025-08-14", time: "19:30", hcho: 0.100, tvoc: 0.316, pm25: 0.12, pm10: 0.15, co2: 1020, comment: null },
+                    { date: "2025-08-15", time: "09:15", hcho: 0.523, tvoc: 1.464, pm25: 0.17, pm10: 0.23, co2: 2004, comment: null },
+                    { date: "2025-08-15", time: "19:15", hcho: 0.040, tvoc: 0.123, pm25: 0.11, pm10: 0.16, co2: 706, comment: null },
+                    { date: "2025-08-16", time: "09:15", hcho: 0.048, tvoc: 0.123, pm25: 0.11, pm10: 0.15, co2: 723, comment: null },
+                    { date: "2025-08-16", time: "19:50", hcho: 0.012, tvoc: 0.033, pm25: 0.11, pm10: 0.18, co2: 470, comment: null },
+                    { date: "2025-08-17", time: "09:15", hcho: 0.284, tvoc: 1.576, pm25: 0.22, pm10: 0.30, co2: 1783, comment: null },
+                    { date: "2025-08-17", time: "19:50", hcho: 0.210, tvoc: 0.518, pm25: 0.16, pm10: 0.22, co2: 1515, comment: null },
+                    { date: "2025-08-18", time: "09:30", hcho: 1.500, tvoc: 1.700, pm25: 0.57, pm10: 0.79, co2: 3627, comment: null },
+                    { date: "2025-08-18", time: "20:15", hcho: 0.357, tvoc: 1.022, pm25: 0.12, pm10: 0.14, co2: 1823, comment: null },
+                    { date: "2025-08-19", time: "09:05", hcho: 0.980, tvoc: 1.743, pm25: 0.19, pm10: 0.22, co2: 2659, comment: null },
+                    { date: "2025-08-19", time: "20:55", hcho: 0.122, tvoc: 0.347, pm25: 0.12, pm10: 0.18, co2: 1157, comment: null },
+                    { date: "2025-08-20", time: "09:05", hcho: 1.956, tvoc: 1.999, pm25: 0.30, pm10: 0.40, co2: 4204, comment: null },
+                    { date: "2025-08-21", time: "09:05", hcho: 0.000, tvoc: 0.000, pm25: 0.10, pm10: 0.16, co2: 101, comment: null },
+                    { date: "2025-08-22", time: "19:40", hcho: 1.707, tvoc: 1.290, pm25: 0.79, pm10: 1.10, co2: 3792, comment: null },
+                    { date: "2025-08-24", time: "09:05", hcho: 0.926, tvoc: 1.600, pm25: 0.11, pm10: 0.16, co2: 2664, comment: null },
+                    { date: "2025-08-25", time: "09:20", hcho: 0.300, tvoc: 1.100, pm25: 0.22, pm10: 0.30, co2: 1806, comment: null },
+                    { date: "2025-08-26", time: "10:00", hcho: 0.000, tvoc: 0.000, pm25: 0.13, pm10: 0.15, co2: 109, comment: null },
+                    { date: "2025-08-26", time: "20:40", hcho: 0.012, tvoc: 0.039, pm25: 0.63, pm10: 0.88, co2: 459, comment: null },
+                    { date: "2025-08-27", time: "09:05", hcho: 0.158, tvoc: 0.445, pm25: 0.11, pm10: 0.18, co2: 1355, comment: null },
+                    { date: "2025-08-27", time: "20:45", hcho: 1.697, tvoc: 1.270, pm25: 0.19, pm10: 0.26, co2: 3808, comment: null },
+                    { date: "2025-08-28", time: "09:05", hcho: 0.000, tvoc: 0.000, pm25: 0.13, pm10: 0.18, co2: 11, comment: null },
+                    { date: "2025-08-28", time: "20:50", hcho: 0.012, tvoc: 0.047, pm25: 0.49, pm10: 0.67, co2: 443, comment: null },
+                    { date: "2025-08-29", time: "09:10", hcho: 1.034, tvoc: 1.240, pm25: 0.30, pm10: 0.42, co2: 2340, comment: null },
+                    { date: "2025-08-29", time: "20:20", hcho: 1.300, tvoc: 1.929, pm25: 0.49, pm10: 0.68, co2: 3209, comment: null },
+                    { date: "2025-08-30", time: "11:10", hcho: 0.680, tvoc: 1.900, pm25: 0.22, pm10: 0.30, co2: 2219, comment: null },
+                    { date: "2025-08-30", time: "20:10", hcho: 1.600, tvoc: 1.100, pm25: 0.30, pm10: 0.50, co2: 3682, comment: null },
+                    { date: "2025-08-31", time: "09:15", hcho: 0.500, tvoc: 1.400, pm25: 0.11, pm10: 0.18, co2: 1971, comment: null },
+                    { date: "2025-08-31", time: "20:00", hcho: 0.150, tvoc: 0.500, pm25: 0.11, pm10: 0.15, co2: 470, comment: null },
+                    { date: "2025-09-01", time: "13:00", hcho: 0.483, tvoc: 1.243, pm25: 30.0, pm10: 42.0, co2: 1790, comment: null },
+                    { date: "2025-09-03", time: "11:30", hcho: 0.210, tvoc: 0.588, pm25: 22.0, pm10: 29.0, co2: 1564, comment: null },
+                    { date: "2025-09-03", time: "17:50", hcho: 1.265, tvoc: 1.930, pm25: 35.0, pm10: 50.0, co2: 3258, comment: null },
+                    { date: "2025-09-04", time: "09:10", hcho: 0.570, tvoc: 1.600, pm25: 0.20, pm10: 0.28, co2: 2076, comment: null }
+                ];
+
+                const batch = writeBatch(db);
+                pdfData.forEach(record => {
+                    const docRef = doc(vozduhDataRef); // Creates a new doc with a random ID
+                    const newRecord = {
+                        datetime: Timestamp.fromDate(new Date(`${record.date}T${record.time}`)),
+                        hcho: record.hcho,
+                        tvoc: record.tvoc,
+                        pm25: record.pm25,
+                        pm10: record.pm10,
+                        co2: record.co2,
+                        comment: record.comment
+                    };
+                    batch.set(docRef, newRecord);
+                });
+
+                try {
+                    await batch.commit();
+                    console.log("Successfully seeded air quality data from PDF!");
+                } catch (error) {
+                    console.error("Error seeding air quality data: ", error);
+                }
+            }
+
+
+            // #############################################
+            // #            GENERAL & SHARED SECTION       #
+            // #############################################
+            
+            function setupEventListeners() {
+                // Klimat Listeners
+                addKlimatForm.addEventListener('submit', handleAddKlimatEntry);
+                klimatTableBody.addEventListener('click', (e) => {
+                     const button = e.target.closest('button');
+                     if (!button) return;
+                     const docId = button.dataset.id;
+                     if (button.classList.contains('delete-klimat-btn')) {
+                         if (confirm('Вы уверены, что хотите удалить эту запись GIP?')) {
+                             handleDeleteKlimatEntry(docId);
+                         }
+                     }
+                });
+                document.getElementById('klimat-comment').addEventListener('change', (e) => {
+                    document.getElementById('klimat-custom-comment-wrapper').classList.toggle('hidden', e.target.value !== 'other');
+                });
+                document.getElementById('search-btn').addEventListener('click', handleKlimatSearch);
+                document.getElementById('reset-btn').addEventListener('click', resetKlimatSearch);
+                historyBtn.addEventListener('click', () => { klimatView.classList.add('hidden'); vozduhView.classList.add('hidden'); historyView.classList.remove('hidden'); initializeHistoryView(); });
+                backToMainBtn.addEventListener('click', () => { historyView.classList.add('hidden'); handleTabClick({currentTarget: {id: 'tab-klimat'}}); if(unsubscribeKlimatHistory) unsubscribeKlimatHistory(); });
+
+                // Vozduh Listeners
+                addVozduhForm.addEventListener('submit', handleAddVozduhRecord);
+                vozduhTableBody.addEventListener('click', (e) => {
+                     const button = e.target.closest('button');
+                     if (!button) return;
+                     const docId = button.dataset.id;
+                     if (button.classList.contains('delete-vozduh-btn')) {
+                         handleDeleteVozduhEntry(docId);
+                     }
+                });
+
+                // Shared Listeners (Edit Modal)
+                klimatTableBody.addEventListener('click', handleEditClick);
+                vozduhTableBody.addEventListener('click', handleEditClick);
+                cancelEditBtn.addEventListener('click', () => editModal.classList.add('hidden'));
+                editForm.addEventListener('submit', handleUpdateComment);
+            }
+
+            // --- Edit Modal Logic (Shared) ---
+            async function handleEditClick(e) {
+                const button = e.target.closest('.edit-btn');
+                if (!button) return;
+                
+                const docId = button.dataset.id;
+                const type = button.dataset.type; // 'klimat' or 'vozduh'
+                currentEditContext = { id: docId, type: type };
+
+                const record = type === 'klimat' 
+                    ? allKlimatEntries.find(r => r.id === docId)
+                    : allVozduhRecords.find(r => r.id === docId);
+
+                if (record) {
+                    editCommentTextarea.value = record.comment || '';
+                    editModal.classList.remove('hidden');
+                }
+            }
+            
+            async function handleUpdateComment(e) {
+                e.preventDefault();
+                const { id, type } = currentEditContext;
+                if (!id || !type) return;
+
+                const newComment = editCommentTextarea.value;
+                const dataRef = type === 'klimat' ? klimatDataRef : vozduhDataRef;
+                const docRef = doc(dataRef, id);
+
+                try {
+                    if (type === 'klimat') {
+                        const docSnap = await getDoc(docRef);
+                        const oldComment = docSnap.data().comment;
+                        await logKlimatHistory('update', id, { oldComment, newComment });
+                    }
+                    await updateDoc(docRef, { comment: newComment });
+                    editModal.classList.add('hidden');
+                } catch(error) {
+                    console.error('Failed to update comment:', error);
+                }
+            }
+
+
+            // --- Klimat History & Search ---
+            function handleKlimatSearch() {
+                const searchDateVal = document.getElementById('search-date').value;
+                if (!searchDateVal) { renderKlimatTable(allKlimatEntries); return; }
+                const searchDate = new Date(searchDateVal);
+                const filteredData = allKlimatEntries.filter(entry => {
+                    const entryDate = entry.date.toDate();
+                    return entryDate.getFullYear() === searchDate.getFullYear() &&
+                           entryDate.getMonth() === searchDate.getMonth() &&
+                           entryDate.getDate() === searchDate.getDate();
+                });
+                renderKlimatTable(filteredData);
+            }
+
+            function resetKlimatSearch() {
+                document.getElementById('search-date').value = '';
+                renderKlimatTable(allKlimatEntries);
+            }
+
+            function initializeHistoryView() {
+                const q = query(klimatHistoryRef, orderBy('timestamp', 'desc'));
+                unsubscribeKlimatHistory = onSnapshot(q, (snapshot) => {
+                    renderKlimatHistory(snapshot.docs.map(doc => doc.data()));
+                });
+            }
+             async function logKlimatHistory(action, docId, details) {
+                try {
+                    await addDoc(klimatHistoryRef, {
+                        action, docId, details,
+                        userEmail: currentUserEmail,
+                        timestamp: serverTimestamp(),
+                    });
+                } catch(error) { console.error("Failed to log history:", error); }
+            }
+            function renderKlimatHistory(historyData) {
+                const historyBody = document.getElementById('history-table-body');
+                historyBody.innerHTML = '';
+                if (historyData.length === 0) {
+                    historyBody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-secondary">История изменений пуста.</td></tr>';
+                    return;
+                }
+                historyData.forEach(log => {
+                    const row = document.createElement('tr');
+                    const date = log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString('ru-RU') : 'N/A';
+                    let detailsHtml = '';
+                    if (log.action === 'create') detailsHtml = `Создана запись. Комментарий: "${log.details.newData.comment}"`;
+                    else if (log.action === 'delete') detailsHtml = `Удалена запись. Комментарий был: "${log.details.deletedData.comment}"`;
+                    else if (log.action === 'update') detailsHtml = `Комментарий изменен с "${log.details.oldComment}" на "${log.details.newComment}"`;
+
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">${date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary">${log.userEmail}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary">${log.action}</td>
+                        <td class="px-6 py-4 text-sm text-secondary">${detailsHtml}</td>`;
+                    historyBody.appendChild(row);
+                });
+            }
+
+            // --- Vozduh Helpers ---
+            function setDefaultDateTimeForVozduh() {
+                const now = new Date();
+                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                document.getElementById('vozduh-date').value = now.toISOString().slice(0,10);
+                document.getElementById('vozduh-time').value = now.toISOString().slice(11,16);
+            }
         });
     </script>
 </body>
