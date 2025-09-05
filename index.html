@@ -313,11 +313,11 @@
                             </div>
                         </div>
                         <div class="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                            <div><label for="hcho" class="block text-sm font-medium text-secondary">HCHO</label><input type="number" step="0.001" id="hcho" class="mt-1 form-input" placeholder="0.010"></div>
-                            <div><label for="tvoc" class="block text-sm font-medium text-secondary">TVOC</label><input type="number" step="0.01" id="tvoc" class="mt-1 form-input" placeholder="0.08"></div>
-                            <div><label for="pm25" class="block text-sm font-medium text-secondary">PM2.5</label><input type="number" step="0.1" id="pm25" class="mt-1 form-input" placeholder="5.0"></div>
-                            <div><label for="pm10" class="block text-sm font-medium text-secondary">PM10</label><input type="number" step="0.1" id="pm10" class="mt-1 form-input" placeholder="8.0"></div>
-                            <div><label for="co2" class="block text-sm font-medium text-secondary">CO2</label><input type="number" step="1" id="co2" class="mt-1 form-input" placeholder="450"></div>
+                            <div><label for="hcho" class="block text-sm font-medium text-secondary">HCHO</label><input type="number" step="0.001" id="hcho" class="mt-1 form-input" placeholder="0.010" required></div>
+                            <div><label for="tvoc" class="block text-sm font-medium text-secondary">TVOC</label><input type="number" step="0.01" id="tvoc" class="mt-1 form-input" placeholder="0.08" required></div>
+                            <div><label for="pm25" class="block text-sm font-medium text-secondary">PM2.5</label><input type="number" step="0.1" id="pm25" class="mt-1 form-input" placeholder="5.0" required></div>
+                            <div><label for="pm10" class="block text-sm font-medium text-secondary">PM10</label><input type="number" step="0.1" id="pm10" class="mt-1 form-input" placeholder="8.0" required></div>
+                            <div><label for="co2" class="block text-sm font-medium text-secondary">CO2</label><input type="number" step="1" id="co2" class="mt-1 form-input" placeholder="450" required></div>
                         </div>
                         <div>
                             <label for="vozduh-comment" class="block text-sm font-medium text-secondary">Комментарий</label>
@@ -786,11 +786,11 @@
 
                 const newRecord = {
                     datetime: Timestamp.fromDate(new Date(`${date}T${time}`)),
-                    hcho: document.getElementById('hcho').value ? parseFloat(document.getElementById('hcho').value) : null,
-                    tvoc: document.getElementById('tvoc').value ? parseFloat(document.getElementById('tvoc').value) : null,
-                    pm25: document.getElementById('pm25').value ? parseFloat(document.getElementById('pm25').value) : null,
-                    pm10: document.getElementById('pm10').value ? parseFloat(document.getElementById('pm10').value) : null,
-                    co2:  document.getElementById('co2').value ? parseInt(document.getElementById('co2').value, 10) : null,
+                    hcho: parseFloat(document.getElementById('hcho').value),
+                    tvoc: parseFloat(document.getElementById('tvoc').value),
+                    pm25: parseFloat(document.getElementById('pm25').value),
+                    pm10: parseFloat(document.getElementById('pm10').value),
+                    co2:  parseInt(document.getElementById('co2').value, 10),
                     comment: document.getElementById('vozduh-comment').value.trim() || null
                 };
 
@@ -1151,4 +1151,5 @@
     </script>
 </body>
 </html>
+
 
