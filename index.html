@@ -398,6 +398,20 @@
         </div>
     </div>
 
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="modal-overlay hidden">
+        <div class="card w-full max-w-lg">
+            <h2 class="text-xl font-semibold mb-4" id="edit-modal-title">Редактировать запись</h2>
+            <form id="edit-form" class="space-y-4 max-h-[70vh] overflow-y-auto pr-4">
+                <!-- Dynamic content will be injected here by JavaScript -->
+            </form>
+            <div class="flex justify-end gap-4 mt-6">
+                <button type="button" id="edit-cancel-btn" class="btn btn-secondary">Отмена</button>
+                <button type="submit" form="edit-form" id="edit-save-btn" class="btn btn-submit">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
 
     <script type="module">
         // --- Firebase Initialization ---
@@ -430,6 +444,7 @@
             let allKlimatEntries = [];
             let allVozduhRecords = [];
             let itemToDeleteContext = { id: null, type: null };
+            let itemToEditContext = { id: null, type: null, data: null };
             let lastActiveTabId = 'tab-klimat';
 
             // --- UI Elements ---
@@ -456,6 +471,12 @@
             const confirmModal = document.getElementById('confirm-modal');
             const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
             const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+            // EDIT MODAL Elements
+            const editModal = document.getElementById('edit-modal');
+            const editModalTitle = document.getElementById('edit-modal-title');
+            const editForm = document.getElementById('edit-form');
+            const editCancelBtn = document.getElementById('edit-cancel-btn');
+            
             const themeToggle = document.getElementById('theme-toggle');
             const docHtml = document.documentElement;
             const addKlimatForm = document.getElementById('add-klimat-form');
@@ -557,7 +578,7 @@
             tabVozduh.addEventListener('click', handleTabClick);
             
             // #############################################
-            // #         KLIMAT GIP SECTION              #
+            // #          KLIMAT GIP SECTION             #
             // #############################################
             const klimatDataRef = collection(db, `artifacts/${appId}/public/data/gip_stats`);
             const klimatHistoryRef = collection(db, `artifacts/${appId}/public/data/gip_stats_history`);
@@ -624,6 +645,9 @@
                             <td class="px-6 py-4 text-center align-middle text-sm">${entry.comment || ''}</td>
                             <td class="px-6 py-4 text-center align-middle text-sm">
                                 <div class="flex items-center justify-center gap-2">
+                                    <button data-id="${entry.id}" data-type="klimat" class="edit-btn p-1 hover:text-yellow-500" title="Редактировать">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z" /></svg>
+                                    </button>
                                     <button data-id="${entry.id}" data-type="klimat" class="delete-btn p-1 hover:text-red-500" title="Удалить">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                     </button>
@@ -674,7 +698,7 @@
             }
             
             // #############################################
-            // #     VOZDUH (AIR QUALITY) SECTION        #
+            // #    VOZDUH (AIR QUALITY) SECTION         #
             // #############################################
             const vozduhDataRef = collection(db, `artifacts/${appId}/public/data/air_quality_records`);
             const vozduhHistoryRef = collection(db, `artifacts/${appId}/public/data/air_quality_history`);
@@ -745,6 +769,9 @@
                         <td class="px-6 py-4 text-sm text-secondary whitespace-pre-wrap">${record.comment || '--'}</td>
                         <td class="px-6 py-4 text-sm">
                             <div class="flex items-center space-x-2">
+                                 <button title="Редактировать запись" class="edit-btn p-1 hover:text-yellow-500" data-type="vozduh" data-id="${record.id}">
+                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z" /></svg>
+                                </button>
                                 <button title="Удалить запись" class="delete-btn p-1 hover:text-red-500" data-type="vozduh" data-id="${record.id}">
                                     <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
@@ -782,7 +809,7 @@
             }
             
             // #############################################
-            // #     PDF DATA SEEDING SECTION            #
+            // #      PDF DATA SEEDING SECTION           #
             // #############################################
             
             async function seedVozduhDataFromPDF() {
@@ -856,7 +883,7 @@
 
 
             // #############################################
-            // #       GENERAL & SHARED SECTION          #
+            // #      GENERAL & SHARED SECTION           #
             // #############################################
             
             function setupEventListeners() {
@@ -891,6 +918,12 @@
                     confirmModal.classList.add('hidden');
                 });
                 confirmDeleteBtn.addEventListener('click', handleConfirmDelete);
+
+                // Edit modal listeners
+                editForm.addEventListener('submit', handleUpdateEntry);
+                editCancelBtn.addEventListener('click', () => {
+                    editModal.classList.add('hidden');
+                });
             }
 
             function handleTableActions(e) {
@@ -903,9 +936,159 @@
                 if (button.classList.contains('delete-btn')) {
                     itemToDeleteContext = { id: docId, type: type };
                     confirmModal.classList.remove('hidden');
+                } else if (button.classList.contains('edit-btn')) {
+                    openEditModal(docId, type);
                 }
             }
             
+            async function openEditModal(docId, type) {
+                const dataRef = type === 'klimat' ? klimatDataRef : vozduhDataRef;
+                const docRef = doc(dataRef, docId);
+
+                try {
+                    const docSnap = await getDoc(docRef);
+                    if (!docSnap.exists()) {
+                        console.error("Document not found for editing!");
+                        return;
+                    }
+                    const data = docSnap.data();
+                    itemToEditContext = { id: docId, type: type, data: data };
+
+                    editModalTitle.textContent = `Редактировать запись: ${type === 'klimat' ? 'Климат' : 'Качество воздуха'}`;
+                    populateEditForm(data, type);
+                    editModal.classList.remove('hidden');
+
+                } catch (error) {
+                    console.error("Error fetching document for edit:", error);
+                }
+            }
+            
+            function populateEditForm(data, type) {
+                editForm.innerHTML = ''; // Clear previous form
+                if (type === 'klimat') {
+                    const entryDate = data.date.toDate();
+                    const dateValue = entryDate.toISOString().slice(0, 10);
+                    const timeValue = entryDate.toISOString().slice(11, 16);
+                    const standardComments = ["Прострелов, полос нет"];
+                    const isCustomComment = data.comment && !standardComments.includes(data.comment);
+                    editForm.innerHTML = `
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div><label for="edit-klimat-date" class="block text-sm font-medium text-secondary">Дата</label><input type="date" id="edit-klimat-date" class="mt-1 form-input" value="${dateValue}" required></div>
+                            <div><label for="edit-klimat-time" class="block text-sm font-medium text-secondary">Время</label><input type="time" id="edit-klimat-time" class="mt-1 form-input" value="${timeValue}" required></div>
+                        </div>
+                        <div>
+                            <h3 class="text-md font-semibold text-primary mb-2">Климат</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div><label class="block text-sm font-medium text-secondary">Темп. (°С)</label><input type="number" step="0.001" id="edit-temp" class="mt-1 form-input" value="${data.temp}" required></div>
+                                <div><label class="block text-sm font-medium text-secondary">Влажн. (%)</label><input type="number" step="0.001" id="edit-humidity" class="mt-1 form-input" value="${data.humidity}" required></div>
+                                <div><label class="block text-sm font-medium text-secondary">Давл. (мм)</label><input type="number" step="0.001" id="edit-pressure" class="mt-1 form-input" value="${data.pressure}" required></div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-md font-semibold text-primary mb-2">Давление GIP</h3>
+                            <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                                <div><label class="block text-sm font-medium text-secondary">Cyan</label><input type="number" step="0.001" id="edit-cyan" class="mt-1 form-input" value="${data.cyan}" required></div>
+                                <div><label class="block text-sm font-medium text-secondary">Magenta</label><input type="number" step="0.001" id="edit-magenta" class="mt-1 form-input" value="${data.magenta}" required></div>
+                                <div><label class="block text-sm font-medium text-secondary">Yellow</label><input type="number" step="0.001" id="edit-yellow" class="mt-1 form-input" value="${data.yellow}" required></div>
+                                <div><label class="block text-sm font-medium text-secondary">Black</label><input type="number" step="0.001" id="edit-black" class="mt-1 form-input" value="${data.black}" required></div>
+                                <div><label class="block text-sm font-medium text-secondary">White</label><input type="number" step="0.001" id="edit-white" class="mt-1 form-input" value="${data.white}" required></div>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="edit-klimat-comment" class="block text-sm font-medium text-secondary">Комментарий</label>
+                            <select id="edit-klimat-comment" class="mt-1 form-select">
+                                <option value="Прострелов, полос нет" ${!isCustomComment ? 'selected' : ''}>Прострелов, полос нет</option>
+                                <option value="other" ${isCustomComment ? 'selected' : ''}>Другое (ввести вручную)</option>
+                            </select>
+                            <div id="edit-klimat-custom-comment-wrapper" class="${isCustomComment ? '' : 'hidden'} mt-2">
+                                <input type="text" id="edit-klimat-custom-comment" class="mt-1 form-input" placeholder="Введите свой комментарий..." value="${isCustomComment ? data.comment : ''}">
+                            </div>
+                        </div>`;
+                    document.getElementById('edit-klimat-comment').addEventListener('change', (e) => {
+                        document.getElementById('edit-klimat-custom-comment-wrapper').classList.toggle('hidden', e.target.value !== 'other');
+                    });
+                } else if (type === 'vozduh') {
+                    const entryDate = data.datetime.toDate();
+                    const dateValue = entryDate.toISOString().slice(0, 10);
+                    const timeValue = entryDate.toISOString().slice(11, 16);
+                    editForm.innerHTML = `
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div><label for="edit-vozduh-date" class="block text-sm font-medium text-secondary">Дата</label><input type="date" id="edit-vozduh-date" class="mt-1 form-input" value="${dateValue}" required></div>
+                            <div><label for="edit-vozduh-time" class="block text-sm font-medium text-secondary">Время</label><input type="time" id="edit-vozduh-time" class="mt-1 form-input" value="${timeValue}" required></div>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                            <div><label class="block text-sm font-medium text-secondary">HCHO</label><input type="number" step="0.001" id="edit-hcho" class="mt-1 form-input" value="${data.hcho}" required></div>
+                            <div><label class="block text-sm font-medium text-secondary">TVOC</label><input type="number" step="0.001" id="edit-tvoc" class="mt-1 form-input" value="${data.tvoc}" required></div>
+                            <div><label class="block text-sm font-medium text-secondary">PM2.5</label><input type="number" step="0.001" id="edit-pm25" class="mt-1 form-input" value="${data.pm25}" required></div>
+                            <div><label class="block text-sm font-medium text-secondary">PM10</label><input type="number" step="0.001" id="edit-pm10" class="mt-1 form-input" value="${data.pm10}" required></div>
+                            <div><label class="block text-sm font-medium text-secondary">CO2</label><input type="number" step="0.001" id="edit-co2" class="mt-1 form-input" value="${data.co2}" required></div>
+                        </div>
+                        <div>
+                            <label for="edit-vozduh-comment" class="block text-sm font-medium text-secondary">Комментарий</label>
+                            <textarea id="edit-vozduh-comment" rows="2" class="mt-1 form-textarea" placeholder="Введите комментарий...">${data.comment || ''}</textarea>
+                        </div>`;
+                }
+            }
+            
+            async function handleUpdateEntry(e) {
+                e.preventDefault();
+                const { id, type, data: oldData } = itemToEditContext;
+                if (!id || !type) return;
+
+                let newData;
+                const dataRef = type === 'klimat' ? klimatDataRef : vozduhDataRef;
+                const docRef = doc(dataRef, id);
+
+                if (type === 'klimat') {
+                    const dateValue = document.getElementById('edit-klimat-date').value;
+                    const timeValue = document.getElementById('edit-klimat-time').value;
+                    const commentSelect = document.getElementById('edit-klimat-comment');
+                    let commentValue = commentSelect.value;
+                    if (commentValue === 'other') {
+                        commentValue = document.getElementById('edit-klimat-custom-comment').value || '';
+                    }
+                    newData = {
+                        date: new Date(`${dateValue}T${timeValue}`),
+                        temp: parseFloat(document.getElementById('edit-temp').value),
+                        humidity: parseFloat(document.getElementById('edit-humidity').value),
+                        pressure: parseFloat(document.getElementById('edit-pressure').value),
+                        cyan: parseFloat(document.getElementById('edit-cyan').value),
+                        magenta: parseFloat(document.getElementById('edit-magenta').value),
+                        yellow: parseFloat(document.getElementById('edit-yellow').value),
+                        black: parseFloat(document.getElementById('edit-black').value),
+                        white: parseFloat(document.getElementById('edit-white').value),
+                        comment: commentValue,
+                    };
+                } else if (type === 'vozduh') {
+                    const date = document.getElementById('edit-vozduh-date').value;
+                    const time = document.getElementById('edit-vozduh-time').value;
+                    newData = {
+                        datetime: Timestamp.fromDate(new Date(`${date}T${time}`)),
+                        hcho: parseFloat(document.getElementById('edit-hcho').value),
+                        tvoc: parseFloat(document.getElementById('edit-tvoc').value),
+                        pm25: parseFloat(document.getElementById('edit-pm25').value),
+                        pm10: parseFloat(document.getElementById('edit-pm10').value),
+                        co2: parseFloat(document.getElementById('edit-co2').value),
+                        comment: document.getElementById('edit-vozduh-comment').value.trim() || null
+                    };
+                }
+
+                try {
+                    await updateDoc(docRef, newData);
+                    if (type === 'klimat') {
+                        await logKlimatHistory('update', id, { oldData, newData });
+                    } else {
+                        await logVozduhHistory('update', id, { oldData, newData });
+                    }
+                } catch (error) {
+                    console.error("Failed to update entry:", error);
+                } finally {
+                    editModal.classList.add('hidden');
+                    itemToEditContext = { id: null, type: null, data: null };
+                }
+            }
+
+
             function handleConfirmDelete() {
                 const { id, type } = itemToDeleteContext;
                 if (id && type) {
@@ -1009,12 +1192,17 @@
                          const changes = Object.keys(log.details.newData).reduce((acc, key) => {
                             const oldValue = log.details.oldData[key] ?? 'пусто';
                             const newValue = log.details.newData[key] ?? 'пусто';
-                            if (String(oldValue) !== String(newValue)) {
-                                acc.push(`${key}: "${oldValue}" -> "${newValue}"`);
+                            
+                            // Handle date/timestamp objects for comparison
+                            const oldValStr = oldValue?.toDate ? oldValue.toDate().toISOString() : String(oldValue);
+                            const newValStr = newValue?.toDate ? newValue.toDate().toISOString() : String(newValue);
+
+                            if (oldValStr !== newValStr) {
+                                acc.push(`<b>${key}</b>: "${oldValStr}" -> "${newValStr}"`);
                             }
                             return acc;
                         }, []);
-                        detailsHtml = changes.length > 0 ? `Обновлено: ${changes.join(', ')}` : 'Запись обновлена (без изменений).';
+                        detailsHtml = changes.length > 0 ? `Обновлено: ${changes.join('<br>')}` : 'Запись обновлена (без изменений).';
                     } else {
                         detailsHtml = `Действие "${log.action}" (нет деталей)`;
                     }
@@ -1063,12 +1251,16 @@
                          const changes = Object.keys(log.details.newData).reduce((acc, key) => {
                             const oldValue = log.details.oldData[key] ?? 'пусто';
                             const newValue = log.details.newData[key] ?? 'пусто';
-                            if (String(oldValue) !== String(newValue)) {
-                                acc.push(`${key}: "${oldValue}" -> "${newValue}"`);
+                             
+                            const oldValStr = oldValue?.toDate ? oldValue.toDate().toISOString() : String(oldValue);
+                            const newValStr = newValue?.toDate ? newValue.toDate().toISOString() : String(newValue);
+
+                            if (oldValStr !== newValStr) {
+                                acc.push(`<b>${key}</b>: "${oldValStr}" -> "${newValStr}"`);
                             }
                             return acc;
                         }, []);
-                        detailsHtml = changes.length > 0 ? `Обновлено: ${changes.join(', ')}` : 'Запись обновлена (без изменений).';
+                        detailsHtml = changes.length > 0 ? `Обновлено: ${changes.join('<br>')}` : 'Запись обновлена (без изменений).';
                     } else {
                         detailsHtml = `Действие "${log.action}" (нет деталей)`;
                     }
@@ -1120,4 +1312,3 @@
     </script>
 </body>
 </html>
-
