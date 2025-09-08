@@ -140,6 +140,10 @@
             background-color: var(--hover-bg);
             border-color: var(--border-color);
         }
+        .scrollable-table {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -270,7 +274,7 @@
                         </div>
                     </div>
                     <div id="klimat-loading" class="text-center text-secondary py-8">Загрузка данных...</div>
-                    <div class="overflow-x-auto hidden" id="klimat-table-container">
+                    <div class="overflow-x-auto hidden scrollable-table" id="klimat-table-container">
                         <table class="min-w-full divide-y" style="border-color: var(--border-color);">
                             <thead class="table-header">
                                 <tr>
@@ -336,7 +340,7 @@
                         </div>
                     </div>
                     <div id="vozduh-loading" class="text-center text-secondary py-8">Загрузка данных...</div>
-                    <div id="vozduh-table-container" class="overflow-x-auto hidden">
+                    <div id="vozduh-table-container" class="overflow-x-auto hidden scrollable-table">
                         <table class="min-w-full divide-y" style="border-color: var(--border-color);">
                             <thead class="table-header">
                                 <tr>
@@ -363,7 +367,7 @@
                         <h2 id="history-title" class="text-2xl font-semibold">История изменений</h2>
                         <button id="back-btn" class="btn btn-secondary px-4 py-2 text-sm w-auto">Назад</button>
                     </div>
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto scrollable-table">
                         <table class="min-w-full divide-y" style="border-color: var(--border-color);">
                             <thead class="table-header">
                                 <tr>
@@ -381,17 +385,65 @@
         </main>
     </div>
 
-    <!-- Edit Modal -->
-    <div id="edit-modal" class="modal-overlay hidden">
-        <div class="card w-full max-w-lg">
-            <h2 class="text-2xl font-semibold mb-6">Редактировать комментарий</h2>
-            <form id="edit-form">
-                <div>
-                    <label for="edit-comment" class="block text-sm font-medium text-secondary">Комментарий</label>
-                    <textarea id="edit-comment" rows="4" class="form-textarea mt-1"></textarea>
+    <!-- Edit Record Modal -->
+    <div id="edit-record-modal" class="modal-overlay hidden">
+        <div class="card w-full max-w-2xl">
+            <h2 class="text-2xl font-semibold mb-6">Редактировать запись</h2>
+            <form id="edit-record-form" class="space-y-4 max-h-[80vh] overflow-y-auto p-1">
+                
+                <!-- Shared fields -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="edit-date" class="block text-sm font-medium text-secondary">Дата</label>
+                        <input type="date" id="edit-date" class="mt-1 form-input" required>
+                    </div>
+                    <div>
+                        <label for="edit-time" class="block text-sm font-medium text-secondary">Время</label>
+                        <input type="time" id="edit-time" class="mt-1 form-input" required>
+                    </div>
                 </div>
-                <div class="mt-6 flex justify-end gap-4">
-                    <button type="button" id="cancel-edit-btn" class="btn btn-secondary w-auto px-6">Отмена</button>
+    
+                <!-- Klimat specific fields -->
+                <div id="edit-klimat-fields" class="space-y-4 hidden">
+                    <div>
+                        <h3 class="text-md font-semibold text-primary mb-2">Климат в помещении</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div><label for="edit-temp" class="block text-sm font-medium text-secondary">Темп. (°С)</label><input type="number" step="0.001" id="edit-temp" class="mt-1 form-input" required></div>
+                            <div><label for="edit-humidity" class="block text-sm font-medium text-secondary">Влажн. (%)</label><input type="number" step="0.001" id="edit-humidity" class="mt-1 form-input" required></div>
+                            <div><label for="edit-pressure" class="block text-sm font-medium text-secondary">Давл. (мм)</label><input type="number" step="0.001" id="edit-pressure" class="mt-1 form-input" required></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-md font-semibold text-primary mb-2">Отрицательное давление GIP</h3>
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                            <div><label for="edit-cyan" class="block text-sm font-medium text-secondary">Cyan</label><input type="number" step="0.001" id="edit-cyan" class="mt-1 form-input" required></div>
+                            <div><label for="edit-magenta" class="block text-sm font-medium text-secondary">Magenta</label><input type="number" step="0.001" id="edit-magenta" class="mt-1 form-input" required></div>
+                            <div><label for="edit-yellow" class="block text-sm font-medium text-secondary">Yellow</label><input type="number" step="0.001" id="edit-yellow" class="mt-1 form-input" required></div>
+                            <div><label for="edit-black" class="block text-sm font-medium text-secondary">Black</label><input type="number" step="0.001" id="edit-black" class="mt-1 form-input" required></div>
+                            <div><label for="edit-white" class="block text-sm font-medium text-secondary">White</label><input type="number" step="0.001" id="edit-white" class="mt-1 form-input" required></div>
+                        </div>
+                    </div>
+                </div>
+    
+                <!-- Vozduh specific fields -->
+                <div id="edit-vozduh-fields" class="space-y-4 hidden">
+                     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        <div><label for="edit-hcho" class="block text-sm font-medium text-secondary">HCHO</label><input type="number" step="0.001" id="edit-hcho" class="mt-1 form-input" required></div>
+                        <div><label for="edit-tvoc" class="block text-sm font-medium text-secondary">TVOC</label><input type="number" step="0.001" id="edit-tvoc" class="mt-1 form-input" required></div>
+                        <div><label for="edit-pm25" class="block text-sm font-medium text-secondary">PM2.5</label><input type="number" step="0.001" id="edit-pm25" class="mt-1 form-input" required></div>
+                        <div><label for="edit-pm10" class="block text-sm font-medium text-secondary">PM10</label><input type="number" step="0.001" id="edit-pm10" class="mt-1 form-input" required></div>
+                        <div><label for="edit-co2" class="block text-sm font-medium text-secondary">CO2</label><input type="number" step="0.001" id="edit-co2" class="mt-1 form-input" required></div>
+                    </div>
+                </div>
+    
+                <!-- Shared comment field -->
+                <div>
+                    <label for="edit-record-comment" class="block text-sm font-medium text-secondary">Комментарий</label>
+                    <textarea id="edit-record-comment" rows="3" class="mt-1 form-textarea"></textarea>
+                </div>
+                
+                <div class="mt-6 flex justify-end gap-4 pt-4 border-t" style="border-color: var(--border-color);">
+                    <button type="button" id="cancel-edit-record-btn" class="btn btn-secondary w-auto px-6">Отмена</button>
                     <button type="submit" class="btn btn-submit w-auto px-6">Сохранить</button>
                 </div>
             </form>
@@ -455,10 +507,9 @@
             const tabKlimat = document.getElementById('tab-klimat');
             const tabVozduh = document.getElementById('tab-vozduh');
             // Modals & General
-            const editModal = document.getElementById('edit-modal');
-            const editForm = document.getElementById('edit-form');
-            const cancelEditBtn = document.getElementById('cancel-edit-btn');
-            const editCommentTextarea = document.getElementById('edit-comment');
+            const editRecordModal = document.getElementById('edit-record-modal');
+            const editRecordForm = document.getElementById('edit-record-form');
+            const cancelEditRecordBtn = document.getElementById('cancel-edit-record-btn');
             const themeToggle = document.getElementById('theme-toggle');
             const docHtml = document.documentElement;
             // Klimat specific
@@ -758,7 +809,7 @@
                     Object.keys(vozduhParams).forEach(key => {
                         const value = record[key];
                         const statusClass = (v, c) => v === null || v === undefined ? '' : v > c.thresholds.moderate ? 'status-bad' : v > c.thresholds.good ? 'status-moderate' : 'status-good';
-                        const formattedValue = value !== null ? value.toFixed(key === 'hcho' ? 3 : (key === 'co2' ? 0 : 2)) : '--';
+                        const formattedValue = value !== null ? value.toFixed(key === 'co2' ? 0 : 3) : '--';
                         cellsHTML += `<td class="px-6 py-4 text-sm"><span class="status-dot ${statusClass(value, vozduhParams[key])}"></span><span>${formattedValue}</span></td>`;
                     });
                     
@@ -766,7 +817,7 @@
                         <td class="px-6 py-4 text-sm text-secondary whitespace-pre-wrap">${record.comment || '--'}</td>
                         <td class="px-6 py-4 text-sm">
                             <div class="flex items-center space-x-2">
-                                <button title="Изменить комментарий" class="edit-btn p-1 hover:text-yellow-400" data-type="vozduh" data-id="${record.id}">
+                                <button title="Редактировать запись" class="edit-btn p-1 hover:text-yellow-400" data-type="vozduh" data-id="${record.id}">
                                     <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"></path></svg>
                                 </button>
                                 <button title="Удалить запись" class="delete-btn p-1 hover:text-red-500" data-type="vozduh" data-id="${record.id}">
@@ -790,7 +841,7 @@
                     tvoc: parseFloat(document.getElementById('tvoc').value),
                     pm25: parseFloat(document.getElementById('pm25').value),
                     pm10: parseFloat(document.getElementById('pm10').value),
-                    co2:  parseInt(document.getElementById('co2').value, 10),
+                    co2:  parseFloat(document.getElementById('co2').value),
                     comment: document.getElementById('vozduh-comment').value.trim() || null
                 };
 
@@ -912,8 +963,8 @@
                 });
 
                 // Edit Modal Listeners
-                cancelEditBtn.addEventListener('click', () => editModal.classList.add('hidden'));
-                editForm.addEventListener('submit', handleUpdateComment);
+                cancelEditRecordBtn.addEventListener('click', () => editRecordModal.classList.add('hidden'));
+                editRecordForm.addEventListener('submit', handleUpdateRecord);
             }
 
             function handleTableActions(e) {
@@ -924,7 +975,7 @@
                 const type = button.dataset.type;
 
                 if (button.classList.contains('edit-btn')) {
-                    handleEditClick(docId, type);
+                    openEditModal(docId, type);
                 } else if (button.classList.contains('delete-btn')) {
                     if (confirm(`Вы уверены, что хотите удалить эту запись?`)) {
                         if (type === 'klimat') handleDeleteKlimatEntry(docId);
@@ -964,43 +1015,107 @@
             }
 
             // --- Edit Modal Logic (Shared) ---
-            function handleEditClick(docId, type) {
+            async function openEditModal(docId, type) {
                 currentEditContext = { id: docId, type: type };
-                const record = type === 'klimat' 
-                    ? allKlimatEntries.find(r => r.id === docId)
-                    : allVozduhRecords.find(r => r.id === docId);
 
-                if (record) {
-                    editCommentTextarea.value = record.comment || '';
-                    editModal.classList.remove('hidden');
+                const dataRef = type === 'klimat' ? klimatDataRef : vozduhDataRef;
+                const docRef = doc(dataRef, docId);
+                const docSnap = await getDoc(docRef);
+
+                if (!docSnap.exists()) {
+                    console.error("Document not found!");
+                    return;
                 }
+                const record = docSnap.data();
+                
+                // Populate shared fields
+                const recordDate = type === 'klimat' ? record.date.toDate() : record.datetime.toDate();
+                const dateValue = recordDate.toISOString().slice(0, 10);
+                const timeValue = recordDate.toISOString().slice(11, 16);
+                document.getElementById('edit-date').value = dateValue;
+                document.getElementById('edit-time').value = timeValue;
+                document.getElementById('edit-record-comment').value = record.comment || '';
+
+                // Show/hide and populate specific fields
+                const klimatFields = document.getElementById('edit-klimat-fields');
+                const vozduhFields = document.getElementById('edit-vozduh-fields');
+
+                if (type === 'klimat') {
+                    klimatFields.classList.remove('hidden');
+                    vozduhFields.classList.add('hidden');
+                    document.getElementById('edit-temp').value = record.temp;
+                    document.getElementById('edit-humidity').value = record.humidity;
+                    document.getElementById('edit-pressure').value = record.pressure;
+                    document.getElementById('edit-cyan').value = record.cyan;
+                    document.getElementById('edit-magenta').value = record.magenta;
+                    document.getElementById('edit-yellow').value = record.yellow;
+                    document.getElementById('edit-black').value = record.black;
+                    document.getElementById('edit-white').value = record.white;
+                } else if (type === 'vozduh') {
+                    klimatFields.classList.add('hidden');
+                    vozduhFields.classList.remove('hidden');
+                    document.getElementById('edit-hcho').value = record.hcho;
+                    document.getElementById('edit-tvoc').value = record.tvoc;
+                    document.getElementById('edit-pm25').value = record.pm25;
+                    document.getElementById('edit-pm10').value = record.pm10;
+                    document.getElementById('edit-co2').value = record.co2;
+                }
+                
+                editRecordModal.classList.remove('hidden');
             }
             
-            async function handleUpdateComment(e) {
+            async function handleUpdateRecord(e) {
                 e.preventDefault();
                 const { id, type } = currentEditContext;
                 if (!id || !type) return;
 
-                const newComment = editCommentTextarea.value;
                 const dataRef = type === 'klimat' ? klimatDataRef : vozduhDataRef;
                 const docRef = doc(dataRef, id);
 
+                // Fetch old data for logging
+                const docSnap = await getDoc(docRef);
+                if (!docSnap.exists()) return;
+                const oldData = docSnap.data();
+
+                let updatedData = {};
+
+                const dateValue = document.getElementById('edit-date').value;
+                const timeValue = document.getElementById('edit-time').value;
+                const newTimestamp = Timestamp.fromDate(new Date(`${dateValue}T${timeValue}`));
+
+                if (type === 'klimat') {
+                    updatedData = {
+                        date: newTimestamp,
+                        temp: parseFloat(document.getElementById('edit-temp').value),
+                        humidity: parseFloat(document.getElementById('edit-humidity').value),
+                        pressure: parseFloat(document.getElementById('edit-pressure').value),
+                        cyan: parseFloat(document.getElementById('edit-cyan').value),
+                        magenta: parseFloat(document.getElementById('edit-magenta').value),
+                        yellow: parseFloat(document.getElementById('edit-yellow').value),
+                        black: parseFloat(document.getElementById('edit-black').value),
+                        white: parseFloat(document.getElementById('edit-white').value),
+                        comment: document.getElementById('edit-record-comment').value.trim() || null
+                    };
+                    await logKlimatHistory('update', id, { oldData: { ...oldData, date: oldData.date.toDate().toISOString() }, newData: { ...updatedData, date: updatedData.date.toDate().toISOString() }});
+
+                } else if (type === 'vozduh') {
+                     updatedData = {
+                        datetime: newTimestamp,
+                        hcho: parseFloat(document.getElementById('edit-hcho').value),
+                        tvoc: parseFloat(document.getElementById('edit-tvoc').value),
+                        pm25: parseFloat(document.getElementById('edit-pm25').value),
+                        pm10: parseFloat(document.getElementById('edit-pm10').value),
+                        co2:  parseFloat(document.getElementById('edit-co2').value),
+                        comment: document.getElementById('edit-record-comment').value.trim() || null
+                    };
+                    await logVozduhHistory('update', id, { oldData: { ...oldData, datetime: oldData.datetime.toDate().toISOString() }, newData: { ...updatedData, datetime: updatedData.datetime.toDate().toISOString() }});
+                }
+
                 try {
-                    const docSnap = await getDoc(docRef);
-                    if(!docSnap.exists()) return;
-                    const oldComment = docSnap.data().comment;
-                    
-                    await updateDoc(docRef, { comment: newComment });
-                    
-                    if (type === 'klimat') {
-                        await logKlimatHistory('update', id, { oldComment, newComment });
-                    } else if (type === 'vozduh') {
-                        await logVozduhHistory('update', id, { oldComment, newComment });
-                    }
-                    
-                    editModal.classList.add('hidden');
+                    await updateDoc(docRef, updatedData);
+                    editRecordModal.classList.add('hidden');
                 } catch(error) {
-                    console.error('Failed to update comment:', error);
+                    console.error('Failed to update record:', error);
                 }
             }
 
@@ -1061,7 +1176,7 @@
                     let detailsHtml = '';
                     if (log.action === 'create') detailsHtml = `Создана запись. Комментарий: "${log.details.newData.comment}"`;
                     else if (log.action === 'delete') detailsHtml = `Удалена запись. Комментарий был: "${log.details.deletedData.comment}"`;
-                    else if (log.action === 'update') detailsHtml = `Комментарий изменен с "${log.details.oldComment}" на "${log.details.newComment}"`;
+                    else if (log.action === 'update') detailsHtml = `Запись от ${new Date(log.details.newData.date).toLocaleTimeString('ru-RU')} была обновлена.`;
 
                     row.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap text-sm">${date}</td>
@@ -1098,14 +1213,14 @@
 
                     const formatRecord = (record) => {
                         return Object.entries(record)
-                            .filter(([key, value]) => value !== null && key !== 'datetime')
+                            .filter(([key, value]) => value !== null && key !== 'datetime' && key !== 'comment')
                             .map(([key, value]) => `${key}: ${value}`)
                             .join(', ');
                     };
 
                     if (log.action === 'create') detailsHtml = `Создана запись: ${formatRecord(log.details.newData)}`;
                     else if (log.action === 'delete') detailsHtml = `Удалена запись: ${formatRecord(log.details.deletedData)}`;
-                    else if (log.action === 'update') detailsHtml = `Комментарий изменен с "${log.details.oldComment || ''}" на "${log.details.newComment}"`;
+                    else if (log.action === 'update') detailsHtml = `Запись от ${new Date(log.details.newData.datetime).toLocaleTimeString('ru-RU')} была обновлена.`;
 
                     row.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap text-sm">${date}</td>
@@ -1151,7 +1266,5 @@
     </script>
 </body>
 </html>
-
-
 
 
