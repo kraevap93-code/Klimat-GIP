@@ -107,6 +107,7 @@
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background-color: rgba(0, 0, 0, 0.7);
             display: flex; align-items: center; justify-content: center; z-index: 50;
+            transition: opacity 0.3s ease;
         }
         .slider-checkbox:checked ~ .slider-bg { background-color: #FFC700; }
         html.light .slider-checkbox:checked ~ .slider-bg { background-color: #FFC700; }
@@ -385,81 +386,28 @@
         </main>
     </div>
 
-    <!-- Edit Record Modal -->
-    <div id="edit-record-modal" class="modal-overlay hidden">
-        <div class="card w-full max-w-2xl">
-            <h2 class="text-2xl font-semibold mb-6">Редактировать запись</h2>
-            <form id="edit-record-form" class="space-y-4 max-h-[80vh] overflow-y-auto p-1">
-                
-                <!-- Shared fields -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="edit-date" class="block text-sm font-medium text-secondary">Дата</label>
-                        <input type="date" id="edit-date" class="mt-1 form-input" required>
-                    </div>
-                    <div>
-                        <label for="edit-time" class="block text-sm font-medium text-secondary">Время</label>
-                        <input type="time" id="edit-time" class="mt-1 form-input" required>
-                    </div>
-                </div>
-    
-                <!-- Klimat specific fields -->
-                <div id="edit-klimat-fields" class="space-y-4 hidden">
-                    <div>
-                        <h3 class="text-md font-semibold text-primary mb-2">Климат в помещении</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div><label for="edit-temp" class="block text-sm font-medium text-secondary">Темп. (°С)</label><input type="number" step="0.001" id="edit-temp" class="mt-1 form-input" required></div>
-                            <div><label for="edit-humidity" class="block text-sm font-medium text-secondary">Влажн. (%)</label><input type="number" step="0.001" id="edit-humidity" class="mt-1 form-input" required></div>
-                            <div><label for="edit-pressure" class="block text-sm font-medium text-secondary">Давл. (мм)</label><input type="number" step="0.001" id="edit-pressure" class="mt-1 form-input" required></div>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="text-md font-semibold text-primary mb-2">Отрицательное давление GIP</h3>
-                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                            <div><label for="edit-cyan" class="block text-sm font-medium text-secondary">Cyan</label><input type="number" step="0.001" id="edit-cyan" class="mt-1 form-input" required></div>
-                            <div><label for="edit-magenta" class="block text-sm font-medium text-secondary">Magenta</label><input type="number" step="0.001" id="edit-magenta" class="mt-1 form-input" required></div>
-                            <div><label for="edit-yellow" class="block text-sm font-medium text-secondary">Yellow</label><input type="number" step="0.001" id="edit-yellow" class="mt-1 form-input" required></div>
-                            <div><label for="edit-black" class="block text-sm font-medium text-secondary">Black</label><input type="number" step="0.001" id="edit-black" class="mt-1 form-input" required></div>
-                            <div><label for="edit-white" class="block text-sm font-medium text-secondary">White</label><input type="number" step="0.001" id="edit-white" class="mt-1 form-input" required></div>
-                        </div>
-                    </div>
-                </div>
-    
-                <!-- Vozduh specific fields -->
-                <div id="edit-vozduh-fields" class="space-y-4 hidden">
-                     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                        <div><label for="edit-hcho" class="block text-sm font-medium text-secondary">HCHO</label><input type="number" step="0.001" id="edit-hcho" class="mt-1 form-input" required></div>
-                        <div><label for="edit-tvoc" class="block text-sm font-medium text-secondary">TVOC</label><input type="number" step="0.001" id="edit-tvoc" class="mt-1 form-input" required></div>
-                        <div><label for="edit-pm25" class="block text-sm font-medium text-secondary">PM2.5</label><input type="number" step="0.001" id="edit-pm25" class="mt-1 form-input" required></div>
-                        <div><label for="edit-pm10" class="block text-sm font-medium text-secondary">PM10</label><input type="number" step="0.001" id="edit-pm10" class="mt-1 form-input" required></div>
-                        <div><label for="edit-co2" class="block text-sm font-medium text-secondary">CO2</label><input type="number" step="0.001" id="edit-co2" class="mt-1 form-input" required></div>
-                    </div>
-                </div>
-    
-                <!-- Shared comment field -->
-                <div>
-                    <label for="edit-record-comment" class="block text-sm font-medium text-secondary">Комментарий</label>
-                    <textarea id="edit-record-comment" rows="3" class="mt-1 form-textarea"></textarea>
-                </div>
-                
-                <div class="mt-6 flex justify-end gap-4 pt-4 border-t" style="border-color: var(--border-color);">
-                    <button type="button" id="cancel-edit-record-btn" class="btn btn-secondary w-auto px-6">Отмена</button>
-                    <button type="submit" class="btn btn-submit w-auto px-6">Сохранить</button>
-                </div>
-            </form>
+    <!-- Custom Confirmation Modal -->
+    <div id="confirm-modal" class="modal-overlay hidden">
+        <div class="card w-full max-w-sm">
+            <h2 class="text-xl font-semibold mb-4" id="confirm-modal-title">Подтвердить удаление</h2>
+            <p id="confirm-modal-text" class="text-secondary mb-6">Вы уверены, что хотите удалить эту запись? Это действие необратимо.</p>
+            <div class="flex justify-end gap-4">
+                <button type="button" id="confirm-cancel-btn" class="btn btn-secondary">Отмена</button>
+                <button type="button" id="confirm-delete-btn" class="btn bg-red-600 hover:bg-red-700 text-white">Удалить</button>
+            </div>
         </div>
     </div>
 
 
     <script type="module">
-        // Import Firebase modules
+        // --- Firebase Initialization ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, getDocs, doc, getDoc, updateDoc, deleteDoc, orderBy, Timestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         document.addEventListener('DOMContentLoaded', () => {
             
-            // --- Firebase Configuration (Using Klimat-GIP as the primary) ---
+            // --- Firebase Configuration ---
             const firebaseConfig = {
                 apiKey: "AIzaSyAfGrhtzScHVYMb4Li1muz56jzZdbBz6Ac",
                 authDomain: "klimat-gip.firebaseapp.com",
@@ -481,13 +429,12 @@
             let unsubscribeKlimat, unsubscribeKlimatHistory, unsubscribeVozduh, unsubscribeVozduhHistory;
             let allKlimatEntries = [];
             let allVozduhRecords = [];
-            let currentEditContext = { id: null, type: null };
+            let itemToDeleteContext = { id: null, type: null };
             let lastActiveTabId = 'tab-klimat';
 
             // --- UI Elements ---
             const authContainer = document.getElementById('auth-container');
             const appContainer = document.getElementById('app-container');
-            // Auth
             const loginView = document.getElementById('login-view');
             const registerView = document.getElementById('register-view');
             const showRegisterBtn = document.getElementById('show-register');
@@ -498,7 +445,6 @@
             const userEmailEl = document.getElementById('user-email');
             const loginError = document.getElementById('login-error');
             const registerError = document.getElementById('register-error');
-            // Views & Tabs
             const klimatView = document.getElementById('klimat-view');
             const vozduhView = document.getElementById('vozduh-view');
             const historyView = document.getElementById('history-view');
@@ -506,18 +452,16 @@
             const historyTableBody = document.getElementById('history-table-body');
             const tabKlimat = document.getElementById('tab-klimat');
             const tabVozduh = document.getElementById('tab-vozduh');
-            // Modals & General
-            const editRecordModal = document.getElementById('edit-record-modal');
-            const editRecordForm = document.getElementById('edit-record-form');
-            const cancelEditRecordBtn = document.getElementById('cancel-edit-record-btn');
+            // MODAL Elements
+            const confirmModal = document.getElementById('confirm-modal');
+            const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
+            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
             const themeToggle = document.getElementById('theme-toggle');
             const docHtml = document.documentElement;
-            // Klimat specific
             const addKlimatForm = document.getElementById('add-klimat-form');
             const klimatTableBody = document.getElementById('klimat-table-body');
             const historyBtn = document.getElementById('history-btn');
             const backBtn = document.getElementById('back-btn');
-            // Vozduh specific
             const addVozduhForm = document.getElementById('add-vozduh-form');
             const vozduhTableBody = document.getElementById('vozduh-table-body');
 
@@ -539,7 +483,6 @@
                     appContainer.classList.add('hidden');
                     userEmailEl.textContent = '';
                     historyBtn.classList.add('hidden');
-                    // Unsubscribe from all listeners on logout
                     if (unsubscribeKlimat) unsubscribeKlimat();
                     if (unsubscribeKlimatHistory) unsubscribeKlimatHistory();
                     if (unsubscribeVozduh) unsubscribeVozduh();
@@ -579,8 +522,8 @@
                 setupEventListeners();
                 listenForKlimatDataChanges();
                 listenForVozduhDataChanges();
-                seedVozduhDataFromPDF(); // Call the seeding function
-                setDefaultDateTimes(); // Set default date/time for forms
+                seedVozduhDataFromPDF(); 
+                setDefaultDateTimes();
             }
 
             // --- Theme Toggle Logic ---
@@ -601,26 +544,20 @@
             // --- Tab Navigation ---
             function handleTabClick(event) {
                 lastActiveTabId = event.currentTarget.id;
-
                 document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
                 document.querySelectorAll('#klimat-view, #vozduh-view').forEach(view => view.classList.add('hidden'));
-
                 event.currentTarget.classList.add('active');
                 document.getElementById(event.currentTarget.dataset.view).classList.remove('hidden');
-                
-                // Update history button text
                 if(currentUserEmail === ADMIN_EMAIL){
                     historyBtn.textContent = lastActiveTabId === 'tab-klimat' ? 'Общая история Климат' : 'Общая история Качество воздуха';
                 }
-
                 historyView.classList.add('hidden');
             }
             tabKlimat.addEventListener('click', handleTabClick);
             tabVozduh.addEventListener('click', handleTabClick);
             
-
             // #############################################
-            // #         KLIMAT GIP SECTION                #
+            // #         KLIMAT GIP SECTION              #
             // #############################################
             const klimatDataRef = collection(db, `artifacts/${appId}/public/data/gip_stats`);
             const klimatHistoryRef = collection(db, `artifacts/${appId}/public/data/gip_stats_history`);
@@ -638,14 +575,12 @@
                 const loadingState = document.getElementById('klimat-loading');
                 const tableContainer = document.getElementById('klimat-table-container');
                 tableBody.innerHTML = '';
-
                 if (data.length === 0) {
                     loadingState.textContent = 'Нет данных для отображения.';
                     loadingState.classList.remove('hidden');
                     tableContainer.classList.add('hidden');
                     return;
                 }
-
                 loadingState.classList.add('hidden');
                 tableContainer.classList.remove('hidden');
                 
@@ -662,7 +597,6 @@
                 sortedDates.forEach(dateKey => {
                     const date = new Date(dateKey);
                     const formattedDate = date.toLocaleDateString('ru-RU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                    
                     const dateRow = document.createElement('tr');
                     dateRow.innerHTML = `<td colspan="11" class="px-6 py-2 text-sm font-semibold" style="background-color: var(--date-header-bg);">${formattedDate}</td>`;
                     tableBody.appendChild(dateRow);
@@ -671,13 +605,10 @@
                     entriesForDay.forEach(entry => {
                         const row = document.createElement('tr');
                         const isProblem = entry.comment && entry.comment.trim() !== 'Прострелов, полос нет';
-                        
                         if (isProblem) row.style.backgroundColor = 'var(--problem-bg)';
                         row.style.transition = 'background-color 0.3s';
-                        
                         row.addEventListener('mouseover', () => { row.style.backgroundColor = isProblem ? 'var(--problem-hover-bg)' : 'var(--hover-bg)'; });
                         row.addEventListener('mouseout', () => { row.style.backgroundColor = isProblem ? 'var(--problem-bg)' : 'transparent'; });
-                        
                         const formattedTime = entry.date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 
                         row.innerHTML = `
@@ -693,10 +624,7 @@
                             <td class="px-6 py-4 text-center align-middle text-sm">${entry.comment || ''}</td>
                             <td class="px-6 py-4 text-center align-middle text-sm">
                                 <div class="flex items-center justify-center gap-2">
-                                    <button data-id="${entry.id}" data-type="klimat" class="edit-btn p-1 hover:text-yellow-400">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                    </button>
-                                    <button data-id="${entry.id}" data-type="klimat" class="delete-btn p-1 hover:text-red-500">
+                                    <button data-id="${entry.id}" data-type="klimat" class="delete-btn p-1 hover:text-red-500" title="Удалить">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                     </button>
                                 </div>
@@ -746,7 +674,7 @@
             }
             
             // #############################################
-            // #        VOZDUH (AIR QUALITY) SECTION       #
+            // #     VOZDUH (AIR QUALITY) SECTION        #
             // #############################################
             const vozduhDataRef = collection(db, `artifacts/${appId}/public/data/air_quality_records`);
             const vozduhHistoryRef = collection(db, `artifacts/${appId}/public/data/air_quality_history`);
@@ -772,7 +700,7 @@
             }
 
             function renderVozduhTable(data) {
-                 const tableBody = vozduhTableBody;
+                const tableBody = vozduhTableBody;
                 const loadingState = document.getElementById('vozduh-loading');
                 const tableContainer = document.getElementById('vozduh-table-container');
                 tableBody.innerHTML = '';
@@ -817,9 +745,6 @@
                         <td class="px-6 py-4 text-sm text-secondary whitespace-pre-wrap">${record.comment || '--'}</td>
                         <td class="px-6 py-4 text-sm">
                             <div class="flex items-center space-x-2">
-                                <button title="Редактировать запись" class="edit-btn p-1 hover:text-yellow-400" data-type="vozduh" data-id="${record.id}">
-                                    <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"></path></svg>
-                                </button>
                                 <button title="Удалить запись" class="delete-btn p-1 hover:text-red-500" data-type="vozduh" data-id="${record.id}">
                                     <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
@@ -857,13 +782,12 @@
             }
             
             // #############################################
-            // #        PDF DATA SEEDING SECTION           #
+            // #     PDF DATA SEEDING SECTION            #
             // #############################################
             
             async function seedVozduhDataFromPDF() {
                 const snapshot = await getDocs(query(vozduhDataRef));
                 if (!snapshot.empty) {
-                    console.log("Air quality data already exists. Seeding skipped.");
                     return;
                 }
                 
@@ -909,7 +833,7 @@
 
                 const batch = writeBatch(db);
                 pdfData.forEach(record => {
-                    const docRef = doc(vozduhDataRef); // Creates a new doc with a random ID
+                    const docRef = doc(vozduhDataRef); 
                     const newRecord = {
                         datetime: Timestamp.fromDate(new Date(`${record.date}T${record.time}`)),
                         hcho: record.hcho,
@@ -932,7 +856,7 @@
 
 
             // #############################################
-            // #            GENERAL & SHARED SECTION       #
+            // #       GENERAL & SHARED SECTION          #
             // #############################################
             
             function setupEventListeners() {
@@ -961,10 +885,12 @@
                     if(unsubscribeKlimatHistory) unsubscribeKlimatHistory();
                     if(unsubscribeVozduhHistory) unsubscribeVozduhHistory();
                 });
-
-                // Edit Modal Listeners
-                cancelEditRecordBtn.addEventListener('click', () => editRecordModal.classList.add('hidden'));
-                editRecordForm.addEventListener('submit', handleUpdateRecord);
+                
+                // Custom confirmation modal listeners
+                confirmCancelBtn.addEventListener('click', () => {
+                    confirmModal.classList.add('hidden');
+                });
+                confirmDeleteBtn.addEventListener('click', handleConfirmDelete);
             }
 
             function handleTableActions(e) {
@@ -974,15 +900,22 @@
                 const docId = button.dataset.id;
                 const type = button.dataset.type;
 
-                if (button.classList.contains('edit-btn')) {
-                    openEditModal(docId, type);
-                } else if (button.classList.contains('delete-btn')) {
-                    if (confirm(`Вы уверены, что хотите удалить эту запись?`)) {
-                        if (type === 'klimat') handleDeleteKlimatEntry(docId);
-                        else if (type === 'vozduh') handleDeleteVozduhEntry(docId);
-                    }
+                if (button.classList.contains('delete-btn')) {
+                    itemToDeleteContext = { id: docId, type: type };
+                    confirmModal.classList.remove('hidden');
                 }
             }
+            
+            function handleConfirmDelete() {
+                const { id, type } = itemToDeleteContext;
+                if (id && type) {
+                    if (type === 'klimat') handleDeleteKlimatEntry(id);
+                    else if (type === 'vozduh') handleDeleteVozduhEntry(id);
+                }
+                confirmModal.classList.add('hidden');
+                itemToDeleteContext = { id: null, type: null }; // Reset context
+            }
+
 
             async function handleDeleteKlimatEntry(docId) {
                 const docRef = doc(klimatDataRef, docId);
@@ -990,10 +923,8 @@
                     const docSnap = await getDoc(docRef);
                     if(!docSnap.exists()) return;
                     const deletedData = docSnap.data();
-                    const logDetails = { ...deletedData, date: deletedData.date.toDate().toISOString() };
-                    
                     await deleteDoc(docRef);
-                    await logKlimatHistory('delete', docId, { deletedData: logDetails });
+                    await logKlimatHistory('delete', docId, { deletedData });
                 } catch(error) {
                     console.error("Failed to delete Klimat entry:", error);
                 }
@@ -1005,120 +936,12 @@
                      const docSnap = await getDoc(docRef);
                     if(!docSnap.exists()) return;
                     const deletedData = docSnap.data();
-                    const logDetails = { ...deletedData, datetime: deletedData.datetime.toDate().toISOString() };
-
                     await deleteDoc(docRef);
-                    await logVozduhHistory('delete', docId, { deletedData: logDetails });
+                    await logVozduhHistory('delete', docId, { deletedData });
                 } catch(error) {
                     console.error("Failed to delete Vozduh entry:", error);
                 }
             }
-
-            // --- Edit Modal Logic (Shared) ---
-            async function openEditModal(docId, type) {
-                currentEditContext = { id: docId, type: type };
-
-                const dataRef = type === 'klimat' ? klimatDataRef : vozduhDataRef;
-                const docRef = doc(dataRef, docId);
-                const docSnap = await getDoc(docRef);
-
-                if (!docSnap.exists()) {
-                    console.error("Document not found!");
-                    return;
-                }
-                const record = docSnap.data();
-                
-                // Populate shared fields
-                const recordDate = type === 'klimat' ? record.date.toDate() : record.datetime.toDate();
-                const dateValue = recordDate.toISOString().slice(0, 10);
-                const timeValue = recordDate.toISOString().slice(11, 16);
-                document.getElementById('edit-date').value = dateValue;
-                document.getElementById('edit-time').value = timeValue;
-                document.getElementById('edit-record-comment').value = record.comment || '';
-
-                // Show/hide and populate specific fields
-                const klimatFields = document.getElementById('edit-klimat-fields');
-                const vozduhFields = document.getElementById('edit-vozduh-fields');
-
-                if (type === 'klimat') {
-                    klimatFields.classList.remove('hidden');
-                    vozduhFields.classList.add('hidden');
-                    document.getElementById('edit-temp').value = record.temp;
-                    document.getElementById('edit-humidity').value = record.humidity;
-                    document.getElementById('edit-pressure').value = record.pressure;
-                    document.getElementById('edit-cyan').value = record.cyan;
-                    document.getElementById('edit-magenta').value = record.magenta;
-                    document.getElementById('edit-yellow').value = record.yellow;
-                    document.getElementById('edit-black').value = record.black;
-                    document.getElementById('edit-white').value = record.white;
-                } else if (type === 'vozduh') {
-                    klimatFields.classList.add('hidden');
-                    vozduhFields.classList.remove('hidden');
-                    document.getElementById('edit-hcho').value = record.hcho;
-                    document.getElementById('edit-tvoc').value = record.tvoc;
-                    document.getElementById('edit-pm25').value = record.pm25;
-                    document.getElementById('edit-pm10').value = record.pm10;
-                    document.getElementById('edit-co2').value = record.co2;
-                }
-                
-                editRecordModal.classList.remove('hidden');
-            }
-            
-            async function handleUpdateRecord(e) {
-                e.preventDefault();
-                const { id, type } = currentEditContext;
-                if (!id || !type) return;
-
-                const dataRef = type === 'klimat' ? klimatDataRef : vozduhDataRef;
-                const docRef = doc(dataRef, id);
-
-                // Fetch old data for logging
-                const docSnap = await getDoc(docRef);
-                if (!docSnap.exists()) return;
-                const oldData = docSnap.data();
-
-                let updatedData = {};
-
-                const dateValue = document.getElementById('edit-date').value;
-                const timeValue = document.getElementById('edit-time').value;
-                const newTimestamp = Timestamp.fromDate(new Date(`${dateValue}T${timeValue}`));
-
-                if (type === 'klimat') {
-                    updatedData = {
-                        date: newTimestamp,
-                        temp: parseFloat(document.getElementById('edit-temp').value),
-                        humidity: parseFloat(document.getElementById('edit-humidity').value),
-                        pressure: parseFloat(document.getElementById('edit-pressure').value),
-                        cyan: parseFloat(document.getElementById('edit-cyan').value),
-                        magenta: parseFloat(document.getElementById('edit-magenta').value),
-                        yellow: parseFloat(document.getElementById('edit-yellow').value),
-                        black: parseFloat(document.getElementById('edit-black').value),
-                        white: parseFloat(document.getElementById('edit-white').value),
-                        comment: document.getElementById('edit-record-comment').value.trim() || null
-                    };
-                    await logKlimatHistory('update', id, { oldData: { ...oldData, date: oldData.date.toDate().toISOString() }, newData: { ...updatedData, date: updatedData.date.toDate().toISOString() }});
-
-                } else if (type === 'vozduh') {
-                     updatedData = {
-                        datetime: newTimestamp,
-                        hcho: parseFloat(document.getElementById('edit-hcho').value),
-                        tvoc: parseFloat(document.getElementById('edit-tvoc').value),
-                        pm25: parseFloat(document.getElementById('edit-pm25').value),
-                        pm10: parseFloat(document.getElementById('edit-pm10').value),
-                        co2:  parseFloat(document.getElementById('edit-co2').value),
-                        comment: document.getElementById('edit-record-comment').value.trim() || null
-                    };
-                    await logVozduhHistory('update', id, { oldData: { ...oldData, datetime: oldData.datetime.toDate().toISOString() }, newData: { ...updatedData, datetime: updatedData.datetime.toDate().toISOString() }});
-                }
-
-                try {
-                    await updateDoc(docRef, updatedData);
-                    editRecordModal.classList.add('hidden');
-                } catch(error) {
-                    console.error('Failed to update record:', error);
-                }
-            }
-
 
             // --- History & Search ---
             function handleKlimatSearch() {
@@ -1160,8 +983,12 @@
                 });
             }
              async function logKlimatHistory(action, docId, details) {
+                const logData = { ...details };
+                if (logData.oldData?.date?.toDate) logData.oldData.date = logData.oldData.date.toDate().toISOString();
+                if (logData.newData?.date?.toDate) logData.newData.date = logData.newData.date.toDate().toISOString();
+                if (logData.deletedData?.date?.toDate) logData.deletedData.date = logData.deletedData.date.toDate().toISOString();
                 try {
-                    await addDoc(klimatHistoryRef, { action, docId, details, userEmail: currentUserEmail, timestamp: serverTimestamp() });
+                    await addDoc(klimatHistoryRef, { action, docId, details: logData, userEmail: currentUserEmail, timestamp: serverTimestamp() });
                 } catch(error) { console.error("Failed to log Klimat history:", error); }
             }
             function renderKlimatHistory(historyData) {
@@ -1174,9 +1001,23 @@
                     const row = document.createElement('tr');
                     const date = log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString('ru-RU') : 'N/A';
                     let detailsHtml = '';
-                    if (log.action === 'create') detailsHtml = `Создана запись. Комментарий: "${log.details.newData.comment}"`;
-                    else if (log.action === 'delete') detailsHtml = `Удалена запись. Комментарий был: "${log.details.deletedData.comment}"`;
-                    else if (log.action === 'update') detailsHtml = `Запись от ${new Date(log.details.newData.date).toLocaleTimeString('ru-RU')} была обновлена.`;
+                    if (log.action === 'create' && log.details?.newData) {
+                        detailsHtml = `Создана запись. Комментарий: "${log.details.newData.comment || ''}"`;
+                    } else if (log.action === 'delete' && log.details?.deletedData) {
+                        detailsHtml = `Удалена запись. Комментарий был: "${log.details.deletedData.comment || ''}"`;
+                    } else if (log.action === 'update' && log.details?.newData && log.details?.oldData) {
+                         const changes = Object.keys(log.details.newData).reduce((acc, key) => {
+                            const oldValue = log.details.oldData[key] ?? 'пусто';
+                            const newValue = log.details.newData[key] ?? 'пусто';
+                            if (String(oldValue) !== String(newValue)) {
+                                acc.push(`${key}: "${oldValue}" -> "${newValue}"`);
+                            }
+                            return acc;
+                        }, []);
+                        detailsHtml = changes.length > 0 ? `Обновлено: ${changes.join(', ')}` : 'Запись обновлена (без изменений).';
+                    } else {
+                        detailsHtml = `Действие "${log.action}" (нет деталей)`;
+                    }
 
                     row.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap text-sm">${date}</td>
@@ -1196,8 +1037,12 @@
                 });
             }
              async function logVozduhHistory(action, docId, details) {
+                const logData = { ...details };
+                if (logData.oldData?.datetime?.toDate) logData.oldData.datetime = logData.oldData.datetime.toDate().toISOString();
+                if (logData.newData?.datetime?.toDate) logData.newData.datetime = logData.newData.datetime.toDate().toISOString();
+                if (logData.deletedData?.datetime?.toDate) logData.deletedData.datetime = logData.deletedData.datetime.toDate().toISOString();
                 try {
-                    await addDoc(vozduhHistoryRef, { action, docId, details, userEmail: currentUserEmail, timestamp: serverTimestamp() });
+                    await addDoc(vozduhHistoryRef, { action, docId, details: logData, userEmail: currentUserEmail, timestamp: serverTimestamp() });
                 } catch(error) { console.error("Failed to log Vozduh history:", error); }
             }
             function renderVozduhHistory(historyData) {
@@ -1210,17 +1055,23 @@
                     const row = document.createElement('tr');
                     const date = log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString('ru-RU') : 'N/A';
                     let detailsHtml = '';
-
-                    const formatRecord = (record) => {
-                        return Object.entries(record)
-                            .filter(([key, value]) => value !== null && key !== 'datetime' && key !== 'comment')
-                            .map(([key, value]) => `${key}: ${value}`)
-                            .join(', ');
-                    };
-
-                    if (log.action === 'create') detailsHtml = `Создана запись: ${formatRecord(log.details.newData)}`;
-                    else if (log.action === 'delete') detailsHtml = `Удалена запись: ${formatRecord(log.details.deletedData)}`;
-                    else if (log.action === 'update') detailsHtml = `Запись от ${new Date(log.details.newData.datetime).toLocaleTimeString('ru-RU')} была обновлена.`;
+                    if (log.action === 'create' && log.details?.newData) {
+                        detailsHtml = `Создана запись. Комментарий: "${log.details.newData.comment || ''}"`;
+                    } else if (log.action === 'delete' && log.details?.deletedData) {
+                        detailsHtml = `Удалена запись. Комментарий был: "${log.details.deletedData.comment || ''}"`;
+                    } else if (log.action === 'update' && log.details?.newData && log.details?.oldData) {
+                         const changes = Object.keys(log.details.newData).reduce((acc, key) => {
+                            const oldValue = log.details.oldData[key] ?? 'пусто';
+                            const newValue = log.details.newData[key] ?? 'пусто';
+                            if (String(oldValue) !== String(newValue)) {
+                                acc.push(`${key}: "${oldValue}" -> "${newValue}"`);
+                            }
+                            return acc;
+                        }, []);
+                        detailsHtml = changes.length > 0 ? `Обновлено: ${changes.join(', ')}` : 'Запись обновлена (без изменений).';
+                    } else {
+                        detailsHtml = `Действие "${log.action}" (нет деталей)`;
+                    }
 
                     row.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap text-sm">${date}</td>
@@ -1233,17 +1084,20 @@
 
 
             // --- Helpers ---
+            function getNumericValue(elementId) {
+                const value = parseFloat(document.getElementById(elementId).value);
+                return isNaN(value) ? null : value;
+            }
+
             function setDefaultDateTimes() {
                 const now = new Date();
                 now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
                 const dateValue = now.toISOString().slice(0,10);
                 const timeValue = now.toISOString().slice(11,16);
 
-                // Set for Klimat form
                 document.getElementById('klimat-date').value = dateValue;
                 document.getElementById('klimat-time').value = timeValue;
 
-                // Set for Vozduh form
                 document.getElementById('vozduh-date').value = dateValue;
                 document.getElementById('vozduh-time').value = timeValue;
             }
@@ -1266,5 +1120,4 @@
     </script>
 </body>
 </html>
-
 
