@@ -24,6 +24,9 @@
             --active-tab-text: #1E1E1E;
             --inactive-tab-bg: #3f3f46;
             --inactive-tab-text: #f4f4f5;
+            --toggle-bg: #52525b; /* zinc-600 */
+            --toggle-dot-bg: #d4d4d8; /* zinc-300 */
+            --toggle-icon-color: #3f3f46;
         }
 
         html.light {
@@ -43,6 +46,9 @@
             --active-tab-text: #1E1E1E;
             --inactive-tab-bg: #e5e7eb;
             --inactive-tab-text: #111827;
+            --toggle-bg: #3f3f46; /* As per screenshot */
+            --toggle-dot-bg: #d4d4d8; /* As per screenshot */
+            --toggle-icon-color: #3f3f46; /* As per screenshot */
         }
 
         body {
@@ -109,10 +115,7 @@
             display: flex; align-items: center; justify-content: center; z-index: 50;
             transition: opacity 0.3s ease;
         }
-        .slider-checkbox:checked ~ .slider-bg { background-color: #FFC700; }
-        html.light .slider-checkbox:checked ~ .slider-bg { background-color: #FFC700; }
-        .slider-checkbox:checked ~ .slider-dot { transform: translateX(100%); }
-        
+      
         /* Air Quality Status Dots */
         .status-dot {
             display: inline-block; width: 10px; height: 10px; border-radius: 50%;
@@ -145,48 +148,68 @@
             max-height: 60vh;
             overflow-y: auto;
         }
+        
+        /* New Theme Toggle Styles */
+        .theme-toggle-label {
+            background-color: var(--toggle-bg);
+        }
+        .slider-dot {
+            background-color: var(--toggle-dot-bg);
+            transform: translateX(0);
+        }
+        .slider-checkbox:checked ~ .slider-dot {
+            transform: translateX(2rem); /* w-8 */
+        }
+
+        #theme-icon-moon {
+            color: var(--toggle-icon-color);
+            transition: color 0.3s;
+        }
+
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="">
 
     <!-- Auth Container -->
-    <div id="auth-container" class="max-w-md mx-auto">
-        <div class="card">
-            <div id="login-view">
-                <h2 class="text-2xl font-bold text-center mb-6">Вход в Панель Мониторинга</h2>
-                <form id="login-form" class="space-y-4">
-                    <div>
-                        <label for="login-email" class="block text-sm font-medium text-secondary">Email</label>
-                        <input type="email" id="login-email" class="mt-1 form-input" required>
-                    </div>
-                    <div>
-                        <label for="login-password" class="block text-sm font-medium text-secondary">Пароль</label>
-                        <input type="password" id="login-password" class="mt-1 form-input" required>
-                    </div>
-                    <p id="login-error" class="text-red-500 text-sm hidden"></p>
-                    <button type="submit" class="btn btn-submit w-full">Войти</button>
-                </form>
-                <p class="mt-4 text-center text-sm text-secondary">
-                    Нет аккаунта? <a href="#" id="show-register" class="font-medium text-[#FFC700] hover:underline">Зарегистрироваться</a>
-                </p>
-            </div>
-            <div id="register-view" class="hidden">
-                <h2 class="text-2xl font-bold text-center mb-6">Регистрация</h2>
-                <form id="register-form" class="space-y-4">
-                    <div>
-                        <label for="register-email" class="block text-sm font-medium text-secondary">Email</label>
-                        <input type="email" id="register-email" class="mt-1 form-input" required>
-                    </div>
-                    <div>
-                        <label for="register-password" class="block text-sm font-medium text-secondary">Пароль</label>
-                        <input type="password" id="register-password" class="mt-1 form-input" required>
-                    </div>
-                    <p id="register-error" class="text-red-500 text-sm hidden"></p>
-                    <button type="submit" class="btn btn-submit w-full">Создать аккаунт</button>
-                </form>
-                <p class="mt-4 text-center text-sm text-secondary">
-                    Уже есть аккаунт? <a href="#" id="show-login" class="font-medium text-[#FFC700] hover:underline">Войти</a>
-                </p>
+    <div id="auth-wrapper" class="flex items-center justify-center min-h-screen p-4">
+        <div id="auth-container" class="w-full max-w-md">
+            <div class="card">
+                <div id="login-view">
+                    <h2 class="text-2xl font-bold text-center mb-6">Вход в систему</h2>
+                    <form id="login-form" class="space-y-4">
+                        <div>
+                            <label for="login-email" class="block text-sm font-medium text-secondary">Email</label>
+                            <input type="email" id="login-email" class="mt-1 form-input" required>
+                        </div>
+                        <div>
+                            <label for="login-password" class="block text-sm font-medium text-secondary">Пароль</label>
+                            <input type="password" id="login-password" class="mt-1 form-input" required>
+                        </div>
+                        <p id="login-error" class="text-red-500 text-sm hidden"></p>
+                        <button type="submit" class="btn btn-submit w-full">Войти</button>
+                    </form>
+                    <p class="mt-4 text-center text-sm text-secondary">
+                        Нет аккаунта? <a href="#" id="show-register" class="font-medium text-[#FFC700] hover:underline">Зарегистрироваться</a>
+                    </p>
+                </div>
+                <div id="register-view" class="hidden">
+                    <h2 class="text-2xl font-bold text-center mb-6">Регистрация</h2>
+                    <form id="register-form" class="space-y-4">
+                        <div>
+                            <label for="register-email" class="block text-sm font-medium text-secondary">Email</label>
+                            <input type="email" id="register-email" class="mt-1 form-input" required>
+                        </div>
+                        <div>
+                            <label for="register-password" class="block text-sm font-medium text-secondary">Пароль</label>
+                            <input type="password" id="register-password" class="mt-1 form-input" required>
+                        </div>
+                        <p id="register-error" class="text-red-500 text-sm hidden"></p>
+                        <button type="submit" class="btn btn-submit w-full">Создать аккаунт</button>
+                    </form>
+                    <p class="mt-4 text-center text-sm text-secondary">
+                        Уже есть аккаунт? <a href="#" id="show-login" class="font-medium text-[#FFC700] hover:underline">Войти</a>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
@@ -201,14 +224,18 @@
                     <button id="logout-btn" class="text-sm text-red-500 hover:underline">Выйти</button>
                 </div>
                  <div class="flex items-center gap-4">
-                    <button id="history-btn" class="hidden btn btn-secondary w-auto px-4 py-2 text-sm rounded-md">Общая история Климат</button>
-                    <label class="flex items-center cursor-pointer">
-                        <div class="relative">
-                            <input type="checkbox" id="theme-toggle" class="sr-only slider-checkbox">
-                            <div class="block w-14 h-8 rounded-full slider-bg" style="background-color: var(--border-color);"></div>
-                            <div class="dot absolute left-1 top-1 w-6 h-6 rounded-full transition-transform slider-dot" style="background-color: var(--card-bg-color);"></div>
-                        </div>
+                    <button id="history-btn" class="hidden btn btn-submit w-auto px-4 py-2 text-sm rounded-md">История климат</button>
+                    
+                    <!-- New Theme Toggle HTML -->
+                    <label for="theme-toggle" title="Переключить тему" class="relative w-16 h-8 flex items-center theme-toggle-label rounded-full cursor-pointer p-1 transition-colors duration-300">
+                        <input type="checkbox" id="theme-toggle" class="sr-only slider-checkbox">
+                        <span class="w-6 h-6 rounded-full shadow-md transform transition-transform duration-300 flex items-center justify-center slider-dot">
+                            <svg id="theme-icon-moon" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                            </svg>
+                        </span>
                     </label>
+
                 </div>
             </div>
             <div class="flex justify-center items-center gap-4 p-2 rounded-lg" style="background-color: var(--card-bg-color);">
@@ -489,10 +516,12 @@
 
             // --- Authentication State Observer ---
             onAuthStateChanged(auth, user => {
+                const authWrapper = document.getElementById('auth-wrapper');
                 if (user) {
                     currentUserEmail = user.email;
-                    authContainer.classList.add('hidden');
+                    authWrapper.classList.add('hidden');
                     appContainer.classList.remove('hidden');
+                    document.body.classList.add('p-4', 'md:p-8');
                     userEmailEl.textContent = user.email;
                     if (user.email === ADMIN_EMAIL) {
                         historyBtn.classList.remove('hidden');
@@ -500,8 +529,9 @@
                     initializeAppLogic();
                 } else {
                     currentUserEmail = null;
-                    authContainer.classList.remove('hidden');
+                    authWrapper.classList.remove('hidden');
                     appContainer.classList.add('hidden');
+                    document.body.classList.remove('p-4', 'md:p-8');
                     userEmailEl.textContent = '';
                     historyBtn.classList.add('hidden');
                     if (unsubscribeKlimat) unsubscribeKlimat();
@@ -549,10 +579,10 @@
 
             // --- Theme Toggle Logic ---
             function applyTheme() {
-                if (themeToggle.checked) {
+                if (themeToggle.checked) { // Light theme
                     docHtml.classList.add('light');
                     localStorage.setItem('theme', 'light');
-                } else {
+                } else { // Dark theme
                     docHtml.classList.remove('light');
                     localStorage.setItem('theme', 'dark');
                 }
@@ -570,7 +600,7 @@
                 event.currentTarget.classList.add('active');
                 document.getElementById(event.currentTarget.dataset.view).classList.remove('hidden');
                 if(currentUserEmail === ADMIN_EMAIL){
-                    historyBtn.textContent = lastActiveTabId === 'tab-klimat' ? 'Общая история Климат' : 'Общая история Качество воздуха';
+                    historyBtn.textContent = lastActiveTabId === 'tab-klimat' ? 'История климат' : 'История качество воздуха';
                 }
                 historyView.classList.add('hidden');
             }
@@ -578,7 +608,7 @@
             tabVozduh.addEventListener('click', handleTabClick);
             
             // #############################################
-            // #          KLIMAT GIP SECTION             #
+            // #         KLIMAT GIP SECTION              #
             // #############################################
             const klimatDataRef = collection(db, `artifacts/${appId}/public/data/gip_stats`);
             const klimatHistoryRef = collection(db, `artifacts/${appId}/public/data/gip_stats_history`);
@@ -698,7 +728,7 @@
             }
             
             // #############################################
-            // #    VOZDUH (AIR QUALITY) SECTION         #
+            // #   VOZDUH (AIR QUALITY) SECTION          #
             // #############################################
             const vozduhDataRef = collection(db, `artifacts/${appId}/public/data/air_quality_records`);
             const vozduhHistoryRef = collection(db, `artifacts/${appId}/public/data/air_quality_history`);
@@ -809,7 +839,7 @@
             }
             
             // #############################################
-            // #      PDF DATA SEEDING SECTION           #
+            // #   PDF DATA SEEDING SECTION              #
             // #############################################
             
             async function seedVozduhDataFromPDF() {
@@ -883,7 +913,7 @@
 
 
             // #############################################
-            // #      GENERAL & SHARED SECTION           #
+            // #   GENERAL & SHARED SECTION              #
             // #############################################
             
             function setupEventListeners() {
