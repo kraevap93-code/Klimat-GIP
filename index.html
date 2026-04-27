@@ -24,8 +24,8 @@
             --active-tab-text: #1E1E1E;
             --inactive-tab-bg: #3f3f46;
             --inactive-tab-text: #f4f4f5;
-            --toggle-bg: #52525b;
-            --toggle-dot-bg: #d4d4d8;
+            --toggle-bg: #52525b; /* zinc-600 */
+            --toggle-dot-bg: #d4d4d8; /* zinc-300 */
             --toggle-icon-color: #3f3f46;
         }
 
@@ -46,9 +46,9 @@
             --active-tab-text: #1E1E1E;
             --inactive-tab-bg: #e5e7eb;
             --inactive-tab-text: #111827;
-            --toggle-bg: #3f3f46;
-            --toggle-dot-bg: #d4d4d8;
-            --toggle-icon-color: #3f3f46;
+            --toggle-bg: #3f3f46; /* As per screenshot */
+            --toggle-dot-bg: #d4d4d8; /* As per screenshot */
+            --toggle-icon-color: #3f3f46; /* As per screenshot */
         }
 
         body {
@@ -115,7 +115,8 @@
             display: flex; align-items: center; justify-content: center; z-index: 50;
             transition: opacity 0.3s ease;
         }
-        
+      
+        /* Air Quality Status Dots */
         .status-dot {
             display: inline-block; width: 10px; height: 10px; border-radius: 50%;
             margin-right: 8px; vertical-align: middle;
@@ -124,6 +125,7 @@
         .status-moderate { background-color: #FFE500; }
         .status-bad { background-color: #FF0000; }
 
+        /* Navigation Tabs */
         .nav-tab {
             padding: 0.5rem 1.5rem;
             font-weight: 600;
@@ -147,6 +149,7 @@
             overflow-y: auto;
         }
         
+        /* New Theme Toggle Styles */
         .theme-toggle-label {
             background-color: var(--toggle-bg);
         }
@@ -155,12 +158,14 @@
             transform: translateX(0);
         }
         .slider-checkbox:checked ~ .slider-dot {
-            transform: translateX(2rem);
+            transform: translateX(2rem); /* w-8 */
         }
+
         #theme-icon-moon {
             color: var(--toggle-icon-color);
             transition: color 0.3s;
         }
+
     </style>
 </head>
 <body class="">
@@ -221,6 +226,7 @@
                  <div class="flex items-center gap-4">
                     <button id="history-btn" class="hidden btn btn-submit w-auto px-4 py-2 text-sm rounded-md">История климат</button>
                     
+                    <!-- New Theme Toggle HTML -->
                     <label for="theme-toggle" title="Переключить тему" class="relative w-16 h-8 flex items-center theme-toggle-label rounded-full cursor-pointer p-1 transition-colors duration-300">
                         <input type="checkbox" id="theme-toggle" class="sr-only slider-checkbox">
                         <span class="w-6 h-6 rounded-full shadow-md transform transition-transform duration-300 flex items-center justify-center slider-dot">
@@ -433,11 +439,12 @@
         </div>
     </div>
 
+
     <script type="module">
         // --- Firebase Initialization ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, getDocs, doc, getDoc, updateDoc, deleteDoc, Timestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, getDocs, doc, getDoc, updateDoc, deleteDoc, orderBy, Timestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         document.addEventListener('DOMContentLoaded', () => {
             
@@ -607,18 +614,11 @@
             const klimatHistoryRef = collection(db, `artifacts/${appId}/public/data/gip_stats_history`);
 
             function listenForKlimatDataChanges() {
-                // ИСПРАВЛЕНИЕ: Убран orderBy для предотвращения ошибки отсутствия индекса
-                unsubscribeKlimat = onSnapshot(klimatDataRef, (snapshot) => {
+                const q = query(klimatDataRef, orderBy('date', 'desc'));
+                unsubscribeKlimat = onSnapshot(q, (snapshot) => {
                     allKlimatEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     renderKlimatTable(allKlimatEntries);
-                }, (error) => {
-                    console.error("Error loading Klimat data:", error);
-                    // Выводим ошибку в UI
-                    const loader = document.getElementById('klimat-loading');
-                    loader.textContent = 'Ошибка загрузки данных: ' + error.message;
-                    loader.classList.add('text-red-500');
-                    loader.classList.remove('hidden');
-                });
+                }, (error) => console.error("Error loading Klimat data:", error));
             }
             
             function renderKlimatTable(data) {
@@ -628,7 +628,7 @@
                 tableBody.innerHTML = '';
                 if (data.length === 0) {
                     loadingState.textContent = 'Нет данных для отображения.';
-                    loadingState.classList.remove('hidden', 'text-red-500');
+                    loadingState.classList.remove('hidden');
                     tableContainer.classList.add('hidden');
                     return;
                 }
@@ -643,7 +643,6 @@
                     groupedData[dateKey].push({ ...entry, date: entryDate });
                 });
 
-                // Сортируем даты по убыванию
                 const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(b) - new Date(a));
 
                 sortedDates.forEach(dateKey => {
@@ -653,8 +652,7 @@
                     dateRow.innerHTML = `<td colspan="11" class="px-6 py-2 text-sm font-semibold" style="background-color: var(--date-header-bg);">${formattedDate}</td>`;
                     tableBody.appendChild(dateRow);
 
-                    // Сортируем время по возрастанию внутри дня (или можно по убыванию, поменяв a.date - b.date на b.date - a.date)
-                    const entriesForDay = groupedData[dateKey].sort((a, b) => b.date - a.date);
+                    const entriesForDay = groupedData[dateKey].sort((a, b) => a.date - b.date);
                     entriesForDay.forEach(entry => {
                         const row = document.createElement('tr');
                         const isProblem = entry.comment && entry.comment.trim() !== 'Прострелов, полос нет';
@@ -744,24 +742,15 @@
             };
 
             function listenForVozduhDataChanges() {
-                // ИСПРАВЛЕНИЕ: Убран orderBy для предотвращения ошибки
-                unsubscribeVozduh = onSnapshot(vozduhDataRef, (snapshot) => {
+                const q = query(vozduhDataRef, orderBy('datetime', 'desc'));
+                unsubscribeVozduh = onSnapshot(q, (snapshot) => {
                     allVozduhRecords = snapshot.docs.map(doc => {
                         const data = doc.data();
                         const jsDate = data.datetime.toDate();
                         return { id: doc.id, ...data, datetime: jsDate, date: jsDate.toISOString().slice(0, 10) }
                     });
-                    
-                    // Сортировка на стороне клиента
-                    allVozduhRecords.sort((a, b) => b.datetime - a.datetime);
                     renderVozduhTable(allVozduhRecords);
-                }, (error) => {
-                    console.error("Error loading Vozduh data:", error);
-                    const loader = document.getElementById('vozduh-loading');
-                    loader.textContent = 'Ошибка загрузки данных: ' + error.message;
-                    loader.classList.add('text-red-500');
-                    loader.classList.remove('hidden');
-                });
+                }, (error) => console.error("Error loading Vozduh data:", error));
             }
 
             function renderVozduhTable(data) {
@@ -772,7 +761,7 @@
                 
                 if (data.length === 0) {
                     loadingState.textContent = 'Нет данных. Добавьте первую запись.';
-                    loadingState.classList.remove('hidden', 'text-red-500');
+                    loadingState.classList.remove('hidden');
                     tableContainer.classList.add('hidden');
                     return;
                 }
@@ -854,33 +843,67 @@
             // #############################################
             
             async function seedVozduhDataFromPDF() {
+                const snapshot = await getDocs(query(vozduhDataRef));
+                if (!snapshot.empty) {
+                    return;
+                }
+                
+                console.log("Air quality collection is empty. Seeding data from PDF...");
+
+                const pdfData = [
+                    { date: "2025-08-13", time: "09:10", hcho: 0.112, tvoc: 0.308, pm25: 0.11, pm10: 0.15, co2: 1080, comment: null },
+                    { date: "2025-08-13", time: "18:52", hcho: 0.351, tvoc: 0.960, pm25: 0.14, pm10: 0.19, co2: 1762, comment: null },
+                    { date: "2025-08-14", time: "12:00", hcho: 0.584, tvoc: 1.576, pm25: 0.27, pm10: 0.37, co2: 2043, comment: "В середине рабочего дня не хватало кислорода." },
+                    { date: "2025-08-14", time: "19:30", hcho: 0.100, tvoc: 0.316, pm25: 0.12, pm10: 0.15, co2: 1020, comment: null },
+                    { date: "2025-08-15", time: "09:15", hcho: 0.523, tvoc: 1.464, pm25: 0.17, pm10: 0.23, co2: 2004, comment: null },
+                    { date: "2025-08-15", time: "19:15", hcho: 0.040, tvoc: 0.123, pm25: 0.11, pm10: 0.16, co2: 706, comment: null },
+                    { date: "2025-08-16", time: "09:15", hcho: 0.048, tvoc: 0.123, pm25: 0.11, pm10: 0.15, co2: 723, comment: null },
+                    { date: "2025-08-16", time: "19:50", hcho: 0.012, tvoc: 0.033, pm25: 0.11, pm10: 0.18, co2: 470, comment: null },
+                    { date: "2025-08-17", time: "09:15", hcho: 0.284, tvoc: 1.576, pm25: 0.22, pm10: 0.30, co2: 1783, comment: null },
+                    { date: "2025-08-17", time: "19:50", hcho: 0.210, tvoc: 0.518, pm25: 0.16, pm10: 0.22, co2: 1515, comment: null },
+                    { date: "2025-08-18", time: "09:30", hcho: 1.500, tvoc: 1.700, pm25: 0.57, pm10: 0.79, co2: 3627, comment: null },
+                    { date: "2025-08-18", time: "20:15", hcho: 0.357, tvoc: 1.022, pm25: 0.12, pm10: 0.14, co2: 1823, comment: null },
+                    { date: "2025-08-19", time: "09:05", hcho: 0.980, tvoc: 1.743, pm25: 0.19, pm10: 0.22, co2: 2659, comment: null },
+                    { date: "2025-08-19", time: "20:55", hcho: 0.122, tvoc: 0.347, pm25: 0.12, pm10: 0.18, co2: 1157, comment: null },
+                    { date: "2025-08-20", time: "09:05", hcho: 1.956, tvoc: 1.999, pm25: 0.30, pm10: 0.40, co2: 4204, comment: null },
+                    { date: "2025-08-21", time: "09:05", hcho: 0.000, tvoc: 0.000, pm25: 0.10, pm10: 0.16, co2: 101, comment: null },
+                    { date: "2025-08-22", time: "19:40", hcho: 1.707, tvoc: 1.290, pm25: 0.79, pm10: 1.10, co2: 3792, comment: null },
+                    { date: "2025-08-24", time: "09:05", hcho: 0.926, tvoc: 1.600, pm25: 0.11, pm10: 0.16, co2: 2664, comment: null },
+                    { date: "2025-08-25", time: "09:20", hcho: 0.300, tvoc: 1.100, pm25: 0.22, pm10: 0.30, co2: 1806, comment: null },
+                    { date: "2025-08-26", time: "10:00", hcho: 0.000, tvoc: 0.000, pm25: 0.13, pm10: 0.15, co2: 109, comment: null },
+                    { date: "2025-08-26", time: "20:40", hcho: 0.012, tvoc: 0.039, pm25: 0.63, pm10: 0.88, co2: 459, comment: null },
+                    { date: "2025-08-27", time: "09:05", hcho: 0.158, tvoc: 0.445, pm25: 0.11, pm10: 0.18, co2: 1355, comment: null },
+                    { date: "2025-08-27", time: "20:45", hcho: 1.697, tvoc: 1.270, pm25: 0.19, pm10: 0.26, co2: 3808, comment: null },
+                    { date: "2025-08-28", time: "09:05", hcho: 0.000, tvoc: 0.000, pm25: 0.13, pm10: 0.18, co2: 11, comment: null },
+                    { date: "2025-08-28", time: "20:50", hcho: 0.012, tvoc: 0.047, pm25: 0.49, pm10: 0.67, co2: 443, comment: null },
+                    { date: "2025-08-29", time: "09:10", hcho: 1.034, tvoc: 1.240, pm25: 0.30, pm10: 0.42, co2: 2340, comment: null },
+                    { date: "2025-08-29", time: "20:20", hcho: 1.300, tvoc: 1.929, pm25: 0.49, pm10: 0.68, co2: 3209, comment: null },
+                    { date: "2025-08-30", time: "11:10", hcho: 0.680, tvoc: 1.900, pm25: 0.22, pm10: 0.30, co2: 2219, comment: null },
+                    { date: "2025-08-30", time: "20:10", hcho: 1.600, tvoc: 1.100, pm25: 0.30, pm10: 0.50, co2: 3682, comment: null },
+                    { date: "2025-08-31", time: "09:15", hcho: 0.500, tvoc: 1.400, pm25: 0.11, pm10: 0.18, co2: 1971, comment: null },
+                    { date: "2025-08-31", time: "20:00", hcho: 0.150, tvoc: 0.500, pm25: 0.11, pm10: 0.15, co2: 470, comment: null },
+                    { date: "2025-09-01", time: "13:00", hcho: 0.483, tvoc: 1.243, pm25: 30.0, pm10: 42.0, co2: 1790, comment: null },
+                    { date: "2025-09-03", time: "11:30", hcho: 0.210, tvoc: 0.588, pm25: 22.0, pm10: 29.0, co2: 1564, comment: null },
+                    { date: "2025-09-03", time: "17:50", hcho: 1.265, tvoc: 1.930, pm25: 35.0, pm10: 50.0, co2: 3258, comment: null },
+                    { date: "2025-09-04", time: "09:10", hcho: 0.570, tvoc: 1.600, pm25: 0.20, pm10: 0.28, co2: 2076, comment: null }
+                ];
+
+                const batch = writeBatch(db);
+                pdfData.forEach(record => {
+                    const docRef = doc(vozduhDataRef); 
+                    const newRecord = {
+                        datetime: Timestamp.fromDate(new Date(`${record.date}T${record.time}`)),
+                        hcho: record.hcho,
+                        tvoc: record.tvoc,
+                        pm25: record.pm25,
+                        pm10: record.pm10,
+                        co2: record.co2,
+                        comment: record.comment
+                    };
+                    batch.set(docRef, newRecord);
+                });
+
                 try {
-                    const snapshot = await getDocs(query(vozduhDataRef));
-                    if (!snapshot.empty) return;
-                    
-                    console.log("Air quality collection is empty. Seeding data from PDF...");
-
-                    const pdfData = [
-                        { date: "2025-08-13", time: "09:10", hcho: 0.112, tvoc: 0.308, pm25: 0.11, pm10: 0.15, co2: 1080, comment: null },
-                        { date: "2025-08-13", time: "18:52", hcho: 0.351, tvoc: 0.960, pm25: 0.14, pm10: 0.19, co2: 1762, comment: null },
-                        { date: "2025-08-14", time: "12:00", hcho: 0.584, tvoc: 1.576, pm25: 0.27, pm10: 0.37, co2: 2043, comment: "В середине рабочего дня не хватало кислорода." }
-                    ];
-
-                    const batch = writeBatch(db);
-                    pdfData.forEach(record => {
-                        const docRef = doc(vozduhDataRef); 
-                        const newRecord = {
-                            datetime: Timestamp.fromDate(new Date(`${record.date}T${record.time}`)),
-                            hcho: record.hcho,
-                            tvoc: record.tvoc,
-                            pm25: record.pm25,
-                            pm10: record.pm10,
-                            co2: record.co2,
-                            comment: record.comment
-                        };
-                        batch.set(docRef, newRecord);
-                    });
-
                     await batch.commit();
                     console.log("Successfully seeded air quality data from PDF!");
                 } catch (error) {
@@ -1167,14 +1190,9 @@
             // Klimat History
             function initializeKlimatHistoryView() {
                 historyTitle.textContent = "История изменений Климат";
-                // ИСПРАВЛЕНИЕ: Убран orderBy для предотвращения ошибки отсутствия индекса
-                unsubscribeKlimatHistory = onSnapshot(klimatHistoryRef, (snapshot) => {
-                    const historyList = snapshot.docs.map(doc => doc.data());
-                    historyList.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-                    renderKlimatHistory(historyList);
-                }, (error) => {
-                    console.error(error);
-                    historyTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-red-500">Ошибка: ${error.message}</td></tr>`;
+                const q = query(klimatHistoryRef, orderBy('timestamp', 'desc'));
+                unsubscribeKlimatHistory = onSnapshot(q, (snapshot) => {
+                    renderKlimatHistory(snapshot.docs.map(doc => doc.data()));
                 });
             }
              async function logKlimatHistory(action, docId, details) {
@@ -1231,14 +1249,9 @@
             // Vozduh History
             function initializeVozduhHistoryView() {
                 historyTitle.textContent = "История изменений Качество воздуха";
-                // ИСПРАВЛЕНИЕ: Убран orderBy для предотвращения ошибки
-                unsubscribeVozduhHistory = onSnapshot(vozduhHistoryRef, (snapshot) => {
-                    const historyList = snapshot.docs.map(doc => doc.data());
-                    historyList.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-                    renderVozduhHistory(historyList);
-                }, (error) => {
-                    console.error(error);
-                    historyTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-red-500">Ошибка: ${error.message}</td></tr>`;
+                const q = query(vozduhHistoryRef, orderBy('timestamp', 'desc'));
+                unsubscribeVozduhHistory = onSnapshot(q, (snapshot) => {
+                    renderVozduhHistory(snapshot.docs.map(doc => doc.data()));
                 });
             }
              async function logVozduhHistory(action, docId, details) {
